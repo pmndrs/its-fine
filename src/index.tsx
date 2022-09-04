@@ -12,7 +12,7 @@ export type Fiber = Reconciler.Fiber
 export type FiberSelector = (node: Fiber) => boolean | void
 
 /**
- * Traverses through a {@link Fiber}, return `true` to halt.
+ * Traverses through a {@link Fiber}, return `true` to stop traversing.
  */
 export function traverseFiber(fiber: Fiber, ascending: boolean, selector: FiberSelector): Fiber | undefined {
   let halted = false

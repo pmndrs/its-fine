@@ -11,11 +11,15 @@ This a growing exploration of `React.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_B
 Returns the current react-internal `Fiber`.
 
 ```tsx
+import * as React from 'react'
+import { type Fiber, useFiber } from 'its-fine'
+
 function Component() {
-  const fiber = useFiber()
+  const fiber: Fiber = useFiber()
 
   React.useLayoutEffect(() => {
-    console.log(fiber.type) // function Component
+    // function Component() {}
+    console.log(fiber.type)
   }, [fiber])
 }
 ```
@@ -25,11 +29,15 @@ function Component() {
 Returns the current react-reconciler `Container`.
 
 ```tsx
+import * as React from 'react'
+import { useContainer } from 'its-fine'
+
 function Component() {
   const container = useContainer()
 
   React.useLayoutEffect(() => {
-    console.log(container.containerInfo.getState()) // Zustand store (e.g. R3F)
+    // Zustand store (e.g. R3F)
+    console.log(container.containerInfo.getState())
   }, [container])
 }
 ```
@@ -39,11 +47,15 @@ function Component() {
 Returns the nearest react-reconciler child instance.
 
 ```tsx
+import * as React from 'react'
+import { useNearestChild } from 'its-fine'
+
 function Component() {
   const childRef = useNearestChild()
 
   React.useLayoutEffect(() => {
-    console.log(childRef.current) // { type: 'primitive', props: {}, children: [] } (e.g. react-nil)
+    // { type: 'primitive', props: {}, children: [] } (e.g. react-nil)
+    console.log(childRef.current)
   }, [])
 
   return <primitive />
@@ -55,11 +67,15 @@ function Component() {
 Returns the nearest react-reconciler parent instance.
 
 ```tsx
+import * as React from 'react'
+import { useNearestParent } from 'its-fine'
+
 function Component() {
   const parentRef = useNearestParent()
 
   React.useLayoutEffect(() => {
-    console.log(parentRef.current) // { type: 'primitive', props: {}, children: [] } (e.g. react-nil)
+    // { type: 'primitive', props: {}, children: [] } (e.g. react-nil)
+    console.log(parentRef.current)
   }, [])
 
   return null
@@ -77,9 +93,14 @@ export default () => (
 Returns a `ContextBridge` of live context providers to pierce context across renderers.
 
 ```tsx
+import * as React from 'react'
+import * as ReactNil from 'react-nil'
+import * as ReactDOM from 'react-dom/client'
+import { useContextBridge } from 'its-fine'
+
 function Canvas(props: { children: React.ReactNode }) {
   const Bridge = useContextBridge()
-  render(<Bridge>{props.children}</Bridge>)
+  ReactNil.render(<Bridge>{props.children}</Bridge>)
   return null
 }
 
@@ -92,9 +113,11 @@ ReactDOM.createRoot(window.root).render(
 
 ### traverseFiber
 
-Traverses through a `Fiber`, return `true` to halt.
+Traverses through a `Fiber`, return `true` to stop traversing.
 
 ```ts
+import { type Fiber, traverseFiber } from 'react-nil'
+
 const ascending = true
-const prevElement = traverseFiber(fiber, ascending, (node) => node.type === 'element')
+const prevElement: Fiber = traverseFiber(fiber, ascending, (node: Fiber) => node.type === 'element')
 ```
