@@ -119,7 +119,7 @@ export function useNearestParent<T = any>(): React.MutableRefObject<T | undefine
 export type ContextBridge = React.FC<React.PropsWithChildren<{}>>
 
 /**
- * React Context currently cannot be shared across renderers but explicitly forwarded between providers (see [react#17275](https://github.com/facebook/react/issues/17275)). This returns a {@link ContextBridge} of live context providers to pierce Context across renderers.
+ * React Context currently cannot be shared across renderers but explicitly forwarded between providers (see [react#17275](https://github.com/facebook/react/issues/17275)). This hook returns a {@link ContextBridge} of live context providers to pierce Context across renderers.
  *
  * Pass {@link ContextBridge} as a component to a secondary renderer to enable context-sharing within its children.
  */
