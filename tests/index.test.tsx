@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { describe, expect, it } from 'vitest'
 import { act, render, type HostContainer, type NilNode } from 'react-nil'
-import { type Fiber, useFiber, useNearestInstance, type Container, useNearestContainer } from '../src'
+import { type Fiber, useFiber, useNearestInstance, useNearestContainer } from '../src'
 
 interface ReactProps {
   key?: React.Key
@@ -47,7 +47,7 @@ describe('useFiber', () => {
 
 describe('useNearestContainer', () => {
   it('gets the nearest reconciler container', async () => {
-    let containerRef!: React.MutableRefObject<Container<HostContainer> | undefined>
+    let containerRef!: React.MutableRefObject<HostContainer | undefined>
     let container!: HostContainer
 
     function Test() {
@@ -56,7 +56,7 @@ describe('useNearestContainer', () => {
     }
     await act(async () => (container = render(<Test />)))
 
-    expect(containerRef.current!.containerInfo).toBe(container)
+    expect(containerRef.current!).toBe(container)
   })
 })
 

@@ -60,25 +60,18 @@ export function useFiber(): Fiber {
 }
 
 /**
- * Represents a reconciler container.
- */
-export interface Container<T = {}> {
-  containerInfo: T
-}
-
-/**
  * Returns the nearest reconciler {@link Container}.
  */
-export function useNearestContainer<T = any>(): React.MutableRefObject<Container<T> | undefined> {
+export function useNearestContainer<T = any>(): React.MutableRefObject<T | undefined> {
   const fiber = useFiber()
-  const container = React.useRef<Container<T>>(null!)
+  const container = React.useRef<T>(null!)
 
   React.useLayoutEffect(() => {
     container.current = __unsafe_traverse_fiber(
       fiber,
       (node) => node.stateNode != null && node.stateNode.containerInfo != null,
       true,
-    )?.stateNode
+    )?.stateNode.containerInfo
   }, [fiber])
 
   return container
