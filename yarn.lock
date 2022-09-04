@@ -380,10 +380,10 @@ postcss@^8.4.16:
     picocolors "^1.0.0"
     source-map-js "^1.0.2"
 
-react-nil@^1.0.0:
-  version "1.0.0"
-  resolved "https://registry.yarnpkg.com/react-nil/-/react-nil-1.0.0.tgz#b345b2a167c38bc2d1fe277bd4d7ab41aa73a12b"
-  integrity sha512-27DU8LxlnXsnLn3HjD7pHDQf8KzA2iYU9d8uIPhgnT7mDBuxHcccgs6ih2eLxKIpDuRVQeDecePcqX8EEaw5SQ==
+react-nil@^1.1.0:
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/react-nil/-/react-nil-1.1.0.tgz#0aa5b104f95f96a85c0cce7c2984d1361bcf3126"
+  integrity sha512-udbPXRua1wQ28wlpdRGCAQHt5dgZIA3FmOW04znY+IwsdtMbnFL7wvJGA3qhZqkDTy+LWAeN3/xpMi9KEgbrdg==
   dependencies:
     "@types/react-reconciler" "^0.26.7"
     react-reconciler "^0.27.0"

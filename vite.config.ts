@@ -1,7 +1,12 @@
+/// <reference types="vitest" />
 import * as path from 'path'
 import { defineConfig } from 'vite'
 
 export default defineConfig({
+  test: {
+    dir: 'tests',
+    setupFiles: 'tests/setupTests.ts',
+  },
   build: {
     minify: false,
     sourcemap: true,

@@ -1,17 +1,113 @@
-import { vi, it } from 'vitest'
+import * as React from 'react'
+import { describe, expect, it } from 'vitest'
+import { act, render, type HostContainer, type NilNode } from 'react-nil'
+import { type Fiber, useFiber, useInstance } from '../src'
 
-declare global {
-  var IS_REACT_ACT_ENVIRONMENT: boolean
+interface ReactProps {
+  key?: React.Key
+  ref?: React.Ref<null>
+  children?: React.ReactNode
 }
 
-// Let React know that we'll be testing effectful components
-global.IS_REACT_ACT_ENVIRONMENT = true
+interface PrimitiveProps {
+  name?: string
+}
 
-// Mock scheduler to test React features
-vi.mock('scheduler', () => require('scheduler/unstable_mock'))
+declare global {
+  namespace JSX {
+    interface IntrinsicElements {
+      primitive: ReactProps & PrimitiveProps
+    }
+  }
+}
 
-// Silence react-dom & react-dom/client mismatch
-const logError = global.console.error.bind(global.console.error)
-global.console.error = (...args: any[]) => !args[0].startsWith('Warning') && logError(...args)
+describe('useFiber', () => {
+  it('gets the current react-internal Fiber', async () => {
+    let fiber!: Fiber
+    let container!: HostContainer
 
-it('runs without crashing', () => {})
+    function Test() {
+      fiber = useFiber()
+      return <primitive />
+    }
+    await act(async () => (container = render(<Test />)))
+
+    expect(fiber).toBeDefined()
+    expect(fiber.type).toBe(Test)
+    expect(fiber.child!.stateNode).toBe(container.head)
+  })
+})
+
+// Classes have internal instances which would be bound to `this`
+class ClassComponent extends React.Component<{ children?: React.ReactNode }> {
+  render() {
+    return <>{this.props?.children}</>
+  }
+}
+
+describe('useInstance', () => {
+  it('gets the nearest child instance', async () => {
+    const instances: React.MutableRefObject<NilNode<PrimitiveProps> | undefined>[] = []
+
+    function Test(props: React.PropsWithChildren) {
+      instances.push(useInstance())
+      return <>{props.children}</>
+    }
+
+    await act(async () => {
+      render(
+        <>
+          <Test>
+            <primitive name="one" />
+          </Test>
+          <Test>
+            <>
+              <primitive name="two" />
+            </>
+          </Test>
+          <Test>
+            <ClassComponent>
+              <primitive name="two" />
+            </ClassComponent>
+          </Test>
+          <Test>
+            <primitive name="three" />
+            <primitive name="four" />
+          </Test>
+        </>,
+      )
+    })
+
+    expect(instances.map((ref) => ref.current?.props.name)).toStrictEqual(['one', 'two', 'two', 'three'])
+  })
+
+  it('gets the nearest parent instance', async () => {
+    const instances: React.MutableRefObject<NilNode<PrimitiveProps> | undefined>[] = []
+
+    function Test(props: React.PropsWithChildren) {
+      instances.push(useInstance(true))
+      return <>{props.children}</>
+    }
+
+    await act(async () => {
+      render(
+        <primitive name="one">
+          <>
+            <Test />
+            <>
+              <Test />
+            </>
+            <ClassComponent>
+              <Test />
+            </ClassComponent>
+            <primitive name="two">
+              <Test />
+            </primitive>
+          </>
+        </primitive>,
+      )
+    })
+
+    expect(instances.map((ref) => ref.current?.props.name)).toStrictEqual(['one', 'one', 'one', 'two'])
+  })
+})
