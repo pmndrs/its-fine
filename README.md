@@ -99,10 +99,9 @@ import { useContextBridge } from 'its-fine'
 function Canvas(props: { children: React.ReactNode }) {
   const Bridge = useContextBridge()
   ReactNil.render(<Bridge>{props.children}</Bridge>)
-  return null
 }
 
-ReactDOM.createRoot(window.root).render(
+ReactDOM.createRoot(document.getElementById('root')).render(
   <Providers>
     <Canvas />
   </Providers>,
