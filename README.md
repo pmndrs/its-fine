@@ -2,7 +2,7 @@
 
 ![](.github/itsfine.png)
 
-A collection of escape hatches for React, and an exploration of `React.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED`. As such you will be able to betray Reacts component abstraction, like injecting context into a foreign React root, or accessing the nearest parent of your component. I'm sure you want me to tell you how safe and stable this all is.
+A collection of escape hatches and an exploration of `React.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED`. As such you will be able to betray Reacts component abstraction, like injecting context into a foreign React root, or accessing the nearest parent of your component. I'm sure you want me to tell you how safe and stable this all is.
 
 ### useFiber
 
