@@ -67,7 +67,7 @@ export interface Container<T = {}> {
 }
 
 /**
- * Returns the nearest reconciler container.
+ * Returns the nearest reconciler {@link Container}.
  */
 export function useNearestContainer<T = any>(): React.MutableRefObject<Container<T> | undefined> {
   const fiber = useFiber()
