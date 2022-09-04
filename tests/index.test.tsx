@@ -84,14 +84,7 @@ describe('useContainer', () => {
       currentContainer = useContainer()
       return null
     }
-    await act(
-      async () =>
-        (container = render(
-          <>
-            <Test />
-          </>,
-        )),
-    )
+    await act(async () => (container = render(<Test />)))
 
     expect(currentContainer.containerInfo).toBe(container)
   })
