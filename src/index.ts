@@ -60,7 +60,7 @@ export function useFiber(): Fiber {
 }
 
 /**
- * Returns the nearest reconciler {@link Container}.
+ * Returns the nearest react-reconciler {@link Container}.
  */
 export function useNearestContainer<T = any>(): React.MutableRefObject<T | undefined> {
   const fiber = useFiber()
@@ -78,7 +78,7 @@ export function useNearestContainer<T = any>(): React.MutableRefObject<T | undef
 }
 
 /**
- * Returns the nearest reconciler instance. Pass `true` to `ascending` to search upwards.
+ * Returns the nearest react-reconciler instance. Pass `true` to `ascending` to search upwards.
  */
 export function useNearestInstance<T = any>(ascending: boolean = false): React.MutableRefObject<T | undefined> {
   const fiber = useFiber()
