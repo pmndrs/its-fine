@@ -160,7 +160,7 @@ Additional exported utility functions for raw handling of Fibers.
 Traverses up or down through a `Fiber`, return `true` to stop and select a node.
 
 ```ts
-import { type Fiber, traverseFiber } from 'react-nil'
+import { type Fiber, traverseFiber } from 'its-fine'
 
 const ascending = true
 const prevElement: Fiber = traverseFiber(fiber, ascending, (node: Fiber) => node.type === 'element')
