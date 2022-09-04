@@ -9,11 +9,15 @@ A collection of escape hatches for React, and an exploration of `React.__SECRET_
 Returns the current react-internal `Fiber`.
 
 ```tsx
+import * as React from 'react'
+import { type Fiber, useFiber } from 'its-fine'
+
 function Component() {
-  const fiber = useFiber()
+  const fiber: Fiber = useFiber()
 
   React.useLayoutEffect(() => {
-    console.log(fiber.type) // function Component
+    // function Component() {}
+    console.log(fiber.type)
   }, [fiber])
 }
 ```
@@ -23,6 +27,9 @@ function Component() {
 Returns the current react-reconciler `Container`, which is the fiber accociated with the object given to `Reconciler.createContainer`. In react-dom `container.containerInfo` will point to the root DOM element. In react-three-fiber `container.containerInfo` will point to the zustand state.
 
 ```tsx
+import * as React from 'react'
+import { useContainer } from 'its-fine'
+
 function Component() {
   const container = useContainer()
 
@@ -37,6 +44,9 @@ function Component() {
 Returns the nearest react-reconciler child instance.
 
 ```tsx
+import * as React from 'react'
+import { useNearestChild } from 'its-fine'
+
 function Component() {
   const childRef = useNearestChild()
 
@@ -53,6 +63,9 @@ function Component() {
 Returns the nearest react-reconciler parent instance.
 
 ```tsx
+import * as React from 'react'
+import { useNearestParent } from 'its-fine'
+
 function Component() {
   const parentRef = useNearestParent()
 
@@ -77,9 +90,15 @@ React context [cannot be shared](https://github.com/pmndrs/react-three-fiber/iss
 This cumbersome practice ends here. `useContextBridge` returns a `ContextBridge` of live context providers to pierce context across renderers. Render it as the first element in your custom React renderer and its contents will be able to access host context.
 
 ```tsx
+import * as React from 'react'
+// react-nil is a custom React-renderer, usually used for testing
+import * as ReactNil from 'react-nil'
+import * as ReactDOM from 'react-dom/client'
+import { useContextBridge } from 'its-fine'
+
 function Canvas(props: { children: React.ReactNode }) {
   const Bridge = useContextBridge()
-  render(<Bridge>{props.children}</Bridge>)
+  ReactNil.render(<Bridge>{props.children}</Bridge>)
   return null
 }
 
@@ -92,9 +111,11 @@ ReactDOM.createRoot(window.root).render(
 
 ### traverseFiber
 
-Traverses through a `Fiber`, return `true` to halt.
+Traverses through a `Fiber`, return `true` to stop traversing.
 
 ```ts
+import { type Fiber, traverseFiber } from 'react-nil'
+
 const ascending = true
-const prevElement = traverseFiber(fiber, ascending, (node) => node.type === 'element')
+const prevElement: Fiber = traverseFiber(fiber, ascending, (node: Fiber) => node.type === 'element')
 ```
