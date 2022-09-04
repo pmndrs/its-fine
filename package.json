@@ -1,7 +1,7 @@
 {
   "name": "its-fine",
   "version": "0.0.0",
-  "description": "A collection of react-internal hooks and utils.",
+  "description": "A collection of escape hatches for React.",
   "keywords": [
     "react",
     "fiber",

@@ -1,6 +1,6 @@
 # its-fine
 
-A collection of react-internal hooks and utils.
+A collection of escape hatches for React.
 
 ![](.github/itsfine.png)
 
