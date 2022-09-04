@@ -12,9 +12,9 @@ export type Fiber = Reconciler.Fiber
 export type FiberSelector = (node: Fiber) => boolean | void
 
 /**
- * Traverses through a {@link Fiber}, return `true` to halt. `ascending` is true by default.
+ * Traverses through a {@link Fiber}, return `true` to halt. `ascending` is `false` by default.
  */
-export function __unsafe_traverse_fiber(fiber: Fiber, selector: FiberSelector, ascending = true): Fiber | undefined {
+export function __unsafe_traverse_fiber(fiber: Fiber, selector: FiberSelector, ascending = false): Fiber | undefined {
   let halted = false
   let selected: Fiber | undefined
 
@@ -77,6 +77,7 @@ export function useNearestContainer<T = any>(): React.MutableRefObject<Container
     container.current = __unsafe_traverse_fiber(
       fiber,
       (node) => node.stateNode != null && node.stateNode.containerInfo != null,
+      true,
     )?.stateNode
   }, [fiber])
 
@@ -84,9 +85,9 @@ export function useNearestContainer<T = any>(): React.MutableRefObject<Container
 }
 
 /**
- * Returns the nearest {@link Fiber} instance. Pass `true` to `parent` to search upwards.
+ * Returns the nearest {@link Fiber} instance. Pass `true` to `ascending` to search upwards.
  */
-export function useNearestInstance<T = any>(parent: boolean = false): React.MutableRefObject<T | undefined> {
+export function useNearestInstance<T = any>(ascending: boolean = false): React.MutableRefObject<T | undefined> {
   const fiber = useFiber()
   const instance = React.useRef<T>()
 
@@ -97,9 +98,9 @@ export function useNearestInstance<T = any>(parent: boolean = false): React.Muta
         node.stateNode != null &&
         !(node.stateNode instanceof React.Component) &&
         node.stateNode.containerInfo === undefined,
-      parent,
+      ascending,
     )?.stateNode
-  }, [fiber, parent])
+  }, [fiber, ascending])
 
   return instance
 }
