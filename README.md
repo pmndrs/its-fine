@@ -93,7 +93,8 @@ function Component() {
 
   React.useLayoutEffect(() => {
     // <div> (e.g. react-dom)
-    console.log(childRef.current)
+    const child = childRef.current
+    if (child) console.log(child)
   }, [])
 
   return <div />
@@ -115,7 +116,8 @@ function Component() {
 
   React.useLayoutEffect(() => {
     // <div> (e.g. react-dom)
-    console.log(parentRef.current)
+    const parent = parentRef.current
+    if (parent) console.log(parent)
   }, [])
 }
 
