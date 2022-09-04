@@ -62,7 +62,8 @@ export function useFiber(): Fiber {
 /**
  * Represents a reconciler container.
  */
-export interface Container<T = {}> extends Fiber {
+export interface Container<T = any> extends Fiber {
+  /** Represents container state passed to {@link ReactReconciler.Reconciler.createContainer}. */
   containerInfo: T
 }
 
