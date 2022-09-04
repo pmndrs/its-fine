@@ -14,7 +14,7 @@ export type FiberSelector = (node: Fiber) => boolean | void
 /**
  * Traverses through a {@link Fiber}, return `true` to halt. `ascending` is `false` by default.
  */
-export function __unsafe_traverse_fiber(fiber: Fiber, selector: FiberSelector, ascending = false): Fiber | undefined {
+export function traverseFiber(fiber: Fiber, selector: FiberSelector, ascending = false): Fiber | undefined {
   let halted = false
   let selected: Fiber | undefined
 
@@ -73,8 +73,7 @@ export function useContainer<T = any>(): Container<T> {
   const fiber = useFiber()
   const container = React.useMemo(
     () =>
-      __unsafe_traverse_fiber(fiber, (node) => node.stateNode != null && node.stateNode.containerInfo != null, true)!
-        .stateNode,
+      traverseFiber(fiber, (node) => node.stateNode != null && node.stateNode.containerInfo != null, true)!.stateNode,
     [fiber],
   )
 
@@ -89,7 +88,7 @@ export function useNearestInstance<T = any>(ascending: boolean = false): React.M
   const instance = React.useRef<T>()
 
   React.useLayoutEffect(() => {
-    instance.current = __unsafe_traverse_fiber(fiber, (node) => typeof node.type === 'string', ascending)?.stateNode
+    instance.current = traverseFiber(fiber, (node) => typeof node.type === 'string', ascending)?.stateNode
   }, [fiber, ascending])
 
   return instance
