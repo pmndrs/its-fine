@@ -89,14 +89,7 @@ export function useNearestInstance<T = any>(ascending: boolean = false): React.M
   const instance = React.useRef<T>()
 
   React.useLayoutEffect(() => {
-    instance.current = __unsafe_traverse_fiber(
-      fiber,
-      (node) =>
-        node.stateNode != null &&
-        !(node.stateNode instanceof React.Component) &&
-        node.stateNode.containerInfo === undefined,
-      ascending,
-    )?.stateNode
+    instance.current = __unsafe_traverse_fiber(fiber, (node) => typeof node.type === 'string', ascending)?.stateNode
   }, [fiber, ascending])
 
   return instance
