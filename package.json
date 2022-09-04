@@ -1,13 +1,13 @@
 {
   "name": "its-fine",
   "version": "0.0.0",
-  "description": "its-fine, a collection of react-internal hooks",
+  "description": "A collection of react-internal hooks and functions.",
   "keywords": [
     "react",
     "fiber",
     "internal",
-    "renderer",
-    "reconciler"
+    "reconciler",
+    "hooks"
   ],
   "author": "Cody Bennett (https://github.com/codyjasonbennett)",
   "maintainers": [
