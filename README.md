@@ -38,7 +38,7 @@ pnpm add its-fine
 
 ## Hooks
 
-Useful React hook abstractions for manipulating and traversing from a component.
+Useful React hook abstractions for manipulating and querying from a component.
 
 ### useFiber
 
