@@ -69,7 +69,7 @@ export interface Container<T = {}> {
 /**
  * Returns the nearest reconciler container.
  */
-export function useContainer<T = any>(): React.MutableRefObject<Container<T>> {
+export function useNearestContainer<T = any>(): React.MutableRefObject<Container<T> | undefined> {
   const fiber = useFiber()
   const container = React.useRef<Container<T>>(null!)
 
@@ -77,7 +77,7 @@ export function useContainer<T = any>(): React.MutableRefObject<Container<T>> {
     container.current = __unsafe_traverse_fiber(
       fiber,
       (node) => node.stateNode != null && node.stateNode.containerInfo != null,
-    )!.stateNode
+    )?.stateNode
   }, [fiber])
 
   return container
@@ -86,7 +86,7 @@ export function useContainer<T = any>(): React.MutableRefObject<Container<T>> {
 /**
  * Returns the nearest {@link Fiber} instance. Pass `true` to `parent` to search upwards.
  */
-export function useInstance<T = any>(parent: boolean = false): React.MutableRefObject<T | undefined> {
+export function useNearestInstance<T = any>(parent: boolean = false): React.MutableRefObject<T | undefined> {
   const fiber = useFiber()
   const instance = React.useRef<T>()
 

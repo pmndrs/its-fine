@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { describe, expect, it } from 'vitest'
 import { act, render, type HostContainer, type NilNode } from 'react-nil'
-import { type Fiber, useFiber, useInstance, type Container, useContainer } from '../src'
+import { type Fiber, useFiber, useNearestInstance, type Container, useNearestContainer } from '../src'
 
 interface ReactProps {
   key?: React.Key
@@ -45,27 +45,27 @@ describe('useFiber', () => {
   })
 })
 
-describe('useContainer', () => {
+describe('useNearestContainer', () => {
   it('gets the nearest reconciler container', async () => {
-    let containerRef!: React.MutableRefObject<Container<HostContainer>>
+    let containerRef!: React.MutableRefObject<Container<HostContainer> | undefined>
     let container!: HostContainer
 
     function Test() {
-      containerRef = useContainer()
+      containerRef = useNearestContainer()
       return null
     }
     await act(async () => (container = render(<Test />)))
 
-    expect(containerRef.current.containerInfo).toBe(container)
+    expect(containerRef.current!.containerInfo).toBe(container)
   })
 })
 
-describe('useInstance', () => {
+describe('useNearestInstance', () => {
   it('gets the nearest child instance', async () => {
     const instances: React.MutableRefObject<NilNode<PrimitiveProps> | undefined>[] = []
 
     function Test(props: React.PropsWithChildren) {
-      instances.push(useInstance())
+      instances.push(useNearestInstance())
       return <>{props.children}</>
     }
 
@@ -101,7 +101,7 @@ describe('useInstance', () => {
     const instances: React.MutableRefObject<NilNode<PrimitiveProps> | undefined>[] = []
 
     function Test(props: React.PropsWithChildren) {
-      instances.push(useInstance(true))
+      instances.push(useNearestInstance(true))
       return <>{props.children}</>
     }
 
