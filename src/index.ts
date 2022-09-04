@@ -73,7 +73,11 @@ export function useContainer<T = any>(): Container<T> {
   const fiber = useFiber()
   const container = React.useMemo(
     () =>
-      traverseFiber(fiber, (node) => node.stateNode != null && node.stateNode.containerInfo != null, true)!.stateNode,
+      traverseFiber(
+        fiber,
+        (node) => node.type == null && node.stateNode != null && node.stateNode.containerInfo != null,
+        true,
+      )!.stateNode,
     [fiber],
   )
 
