@@ -62,7 +62,7 @@ export function useFiber(): Fiber {
 /**
  * Represents a reconciler container.
  */
-export interface Container<T = {}> {
+export interface Container<T = {}> extends Fiber {
   containerInfo: T
 }
 
