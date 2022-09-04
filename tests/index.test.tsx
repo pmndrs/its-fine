@@ -1,7 +1,16 @@
 import * as React from 'react'
 import { describe, expect, it } from 'vitest'
 import { act, render, type HostContainer, type NilNode } from 'react-nil'
-import { type Fiber, useFiber, type Container, useContainer, useNearestChild, useNearestParent } from '../src'
+import { create } from 'react-test-renderer'
+import {
+  type Fiber,
+  useFiber,
+  type Container,
+  useContainer,
+  useNearestChild,
+  useNearestParent,
+  useContextBridge,
+} from '../src'
 
 interface ReactProps {
   key?: React.Key
@@ -42,6 +51,27 @@ describe('useFiber', () => {
     expect(fiber).toBeDefined()
     expect(fiber.type).toBe(Test)
     expect(fiber.child!.stateNode).toBe(container.head)
+  })
+
+  it('works across concurrent renderers', async () => {
+    const fibers: Fiber[] = []
+
+    function Test() {
+      fibers.push(useFiber())
+      return null
+    }
+
+    function Wrapper() {
+      render(<Test />)
+      return <Test />
+    }
+
+    await act(async () => create(<Wrapper />))
+
+    const [outer, inner] = fibers
+    expect(outer).not.toBe(inner)
+    expect(outer.type).toBe(Test)
+    expect(inner.type).toBe(Test)
   })
 })
 
@@ -137,5 +167,64 @@ describe('useNearestParent', () => {
     })
 
     expect(instances.map((ref) => ref.current?.props?.name)).toStrictEqual([undefined, 'one', 'one', 'one', 'two'])
+  })
+})
+
+describe('useContextBridge', () => {
+  it('forwards live context between renderers', async () => {
+    const Context1 = React.createContext<string>(null!)
+    const Context2 = React.createContext<string>(null!)
+
+    const outer: string[] = []
+    const inner: string[] = []
+
+    function Test({ secondary }: { secondary?: boolean }) {
+      ;(secondary ? inner : outer).push(React.useContext(Context1), React.useContext(Context2))
+
+      return null
+    }
+
+    function Wrapper() {
+      const Bridge = useContextBridge()
+      render(
+        <Bridge>
+          <Test secondary />
+        </Bridge>,
+      )
+
+      return (
+        <>
+          <Test />
+          <Context2.Provider value="invalid" />
+        </>
+      )
+    }
+
+    function Providers(props: { children: React.ReactNode }) {
+      const [value1, setValue1] = React.useState('value1')
+      const [value2, setValue2] = React.useState('value2')
+
+      React.useLayoutEffect(() => void setValue1('value1__new'), [])
+      React.useEffect(() => void setValue2('value2__new'), [])
+
+      return (
+        <Context1.Provider value="invalid">
+          <Context1.Provider value={value1}>
+            <Context2.Provider value={value2}>{props.children}</Context2.Provider>
+          </Context1.Provider>
+        </Context1.Provider>
+      )
+    }
+
+    await act(async () =>
+      create(
+        <Providers>
+          <Wrapper />
+        </Providers>,
+      ),
+    )
+
+    expect(outer).toStrictEqual(['value1', 'value2', 'value1__new', 'value2__new'])
+    expect(inner).toStrictEqual(['value1', 'value2', 'value1__new', 'value2__new'])
   })
 })

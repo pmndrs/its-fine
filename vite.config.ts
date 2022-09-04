@@ -13,7 +13,7 @@ export default defineConfig({
     target: 'es2018',
     lib: {
       formats: ['cjs', 'es'],
-      entry: 'src/index.ts',
+      entry: 'src/index.tsx',
       fileName: '[name]',
     },
     rollupOptions: {

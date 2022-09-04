@@ -106,3 +106,37 @@ export function useNearestParent<T = any>(): React.MutableRefObject<T | undefine
 
   return instance
 }
+
+/**
+ * Represents a react-context bridge component.
+ */
+export type ContextBridge = React.FC<React.PropsWithChildren<{}>>
+
+/**
+ * Returns a {@link ContextBridge} of live context providers to pierce context across renderers.
+ */
+export function useContextBridge(): ContextBridge {
+  const fiber = useFiber()
+  const contexts = React.useMemo(() => {
+    const unique = new Set<React.Context<any>>()
+
+    traverseFiber(fiber, true, (node) => {
+      const context = node.type?._context
+      if (context && !unique.has(context)) unique.add(context)
+    })
+
+    return Array.from(unique)
+  }, [fiber])
+
+  return contexts.reduce(
+    (Prev, context) => {
+      const value = React.useContext(context)
+      return (props) => (
+        <Prev>
+          <context.Provider {...props} value={value} />
+        </Prev>
+      )
+    },
+    (props) => <React.Fragment {...props} />,
+  )
+}
