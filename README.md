@@ -7,7 +7,7 @@
 
 <p align="left">
   <a id="cover" href="#cover">
-    <img src=".github/itsfine.png" alt="It's gonna be alright" />
+    <img src=".github/itsfine.jpg" alt="It's gonna be alright" />
   </a>
 </p>
 
