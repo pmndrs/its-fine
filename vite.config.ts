@@ -1,14 +1,19 @@
+/// <reference types="vitest" />
 import * as path from 'path'
 import { defineConfig } from 'vite'
 
 export default defineConfig({
+  test: {
+    dir: 'tests',
+    setupFiles: 'tests/setupTests.ts',
+  },
   build: {
     minify: false,
     sourcemap: true,
     target: 'es2018',
     lib: {
       formats: ['cjs', 'es'],
-      entry: 'src/index.ts',
+      entry: 'src/index.tsx',
       fileName: '[name]',
     },
     rollupOptions: {
