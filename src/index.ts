@@ -60,6 +60,23 @@ export function useFiber(): Fiber {
 }
 
 /**
+ * Returns the nearest reconciler container.
+ */
+export function useContainer<T = any>(): React.MutableRefObject<T> {
+  const fiber = useFiber()
+  const container = React.useRef<T>(null!)
+
+  React.useLayoutEffect(() => {
+    container.current = __unsafe_traverse_fiber(
+      fiber,
+      (node) => node.stateNode != null && node.stateNode.containerInfo != null,
+    )!.stateNode
+  }, [fiber])
+
+  return container
+}
+
+/**
  * Returns the nearest {@link Fiber} instance. Pass `true` to `parent` to search upwards.
  */
 export function useInstance<T = any>(parent: boolean = false): React.MutableRefObject<T | undefined> {
@@ -69,7 +86,10 @@ export function useInstance<T = any>(parent: boolean = false): React.MutableRefO
   React.useLayoutEffect(() => {
     instance.current = __unsafe_traverse_fiber(
       fiber,
-      (node) => node.stateNode != null && !(node.stateNode instanceof React.Component),
+      (node) =>
+        node.stateNode != null &&
+        !(node.stateNode instanceof React.Component) &&
+        node.stateNode.containerInfo === undefined,
       parent,
     )?.stateNode
   }, [fiber, parent])

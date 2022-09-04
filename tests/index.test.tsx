@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { describe, expect, it } from 'vitest'
 import { act, render, type HostContainer, type NilNode } from 'react-nil'
-import { type Fiber, useFiber, useInstance } from '../src'
+import { type Fiber, useFiber, useInstance, useContainer } from '../src'
 
 interface ReactProps {
   key?: React.Key
@@ -18,6 +18,13 @@ declare global {
     interface IntrinsicElements {
       primitive: ReactProps & PrimitiveProps
     }
+  }
+}
+
+// Classes have internal instances which would be bound to `this`
+class ClassComponent extends React.Component<{ children?: React.ReactNode }> {
+  render() {
+    return <>{this.props?.children}</>
   }
 }
 
@@ -38,12 +45,20 @@ describe('useFiber', () => {
   })
 })
 
-// Classes have internal instances which would be bound to `this`
-class ClassComponent extends React.Component<{ children?: React.ReactNode }> {
-  render() {
-    return <>{this.props?.children}</>
-  }
-}
+describe('useContainer', () => {
+  it('gets the nearest reconciler container', async () => {
+    let containerRef!: React.MutableRefObject<{ containerInfo: HostContainer }>
+    let container!: HostContainer
+
+    function Test() {
+      containerRef = useContainer()
+      return null
+    }
+    await act(async () => (container = render(<Test />)))
+
+    expect(containerRef.current.containerInfo).toBe(container)
+  })
+})
 
 describe('useInstance', () => {
   it('gets the nearest child instance', async () => {
@@ -57,6 +72,7 @@ describe('useInstance', () => {
     await act(async () => {
       render(
         <>
+          <Test />
           <Test>
             <primitive name="one" />
           </Test>
@@ -78,7 +94,7 @@ describe('useInstance', () => {
       )
     })
 
-    expect(instances.map((ref) => ref.current?.props.name)).toStrictEqual(['one', 'two', 'two', 'three'])
+    expect(instances.map((ref) => ref.current?.props?.name)).toStrictEqual([undefined, 'one', 'two', 'two', 'three'])
   })
 
   it('gets the nearest parent instance', async () => {
@@ -91,23 +107,26 @@ describe('useInstance', () => {
 
     await act(async () => {
       render(
-        <primitive name="one">
-          <>
-            <Test />
+        <>
+          <Test />
+          <primitive name="one">
             <>
               <Test />
+              <>
+                <Test />
+              </>
+              <ClassComponent>
+                <Test />
+              </ClassComponent>
+              <primitive name="two">
+                <Test />
+              </primitive>
             </>
-            <ClassComponent>
-              <Test />
-            </ClassComponent>
-            <primitive name="two">
-              <Test />
-            </primitive>
-          </>
-        </primitive>,
+          </primitive>
+        </>,
       )
     })
 
-    expect(instances.map((ref) => ref.current?.props.name)).toStrictEqual(['one', 'one', 'one', 'two'])
+    expect(instances.map((ref) => ref.current?.props?.name)).toStrictEqual([undefined, 'one', 'one', 'one', 'two'])
   })
 })
