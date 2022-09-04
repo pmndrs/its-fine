@@ -43,19 +43,19 @@ export function traverseFiber(fiber: Fiber, ascending: boolean, selector: FiberS
   return selected
 }
 
-declare module 'react' {
-  namespace __SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED {
-    const ReactCurrentOwner: React.RefObject<Fiber>
+interface ReactInternal {
+  __SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED: {
+    ReactCurrentOwner: React.RefObject<Fiber>
   }
 }
+
+const { ReactCurrentOwner } = (React as unknown as ReactInternal).__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED
 
 /**
  * Returns the current react-internal {@link Fiber}. This is an implementation detail of react-reconciler.
  */
 export function useFiber(): Fiber {
-  const [fiber] = React.useState<Fiber>(
-    () => React.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED.ReactCurrentOwner.current!,
-  )
+  const [fiber] = React.useState<Fiber>(() => ReactCurrentOwner.current!)
   return fiber
 }
 
