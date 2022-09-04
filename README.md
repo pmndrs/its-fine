@@ -1,6 +1,6 @@
 # its-fine
 
-A collection of react-internal hooks and functions.
+A collection of react-internal hooks and utils.
 
 ![](.github/itsfine.png)
 

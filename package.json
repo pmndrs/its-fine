@@ -1,7 +1,7 @@
 {
   "name": "its-fine",
   "version": "0.0.0",
-  "description": "A collection of react-internal hooks and functions.",
+  "description": "A collection of react-internal hooks and utils.",
   "keywords": [
     "react",
     "fiber",
