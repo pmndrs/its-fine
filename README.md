@@ -113,7 +113,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
 Traverses through a `Fiber`, return `true` to stop traversing.
 
 ```ts
-import { type Fiber, traverseFiber } from 'react-nil'
+import { type Fiber, traverseFiber } from 'its-fine'
 
 const ascending = true
 const prevElement: Fiber = traverseFiber(fiber, ascending, (node: Fiber) => node.type === 'element')
