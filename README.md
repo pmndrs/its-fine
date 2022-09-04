@@ -1,12 +1,48 @@
 # its-fine
 
-![](.github/itsfine.png)
+[![Size](https://img.shields.io/bundlephobia/minzip/its-fine?label=gzip&style=flat&colorA=000000&colorB=000000)](https://bundlephobia.com/package/its-fine)
+[![Version](https://img.shields.io/npm/v/its-fine?style=flat&colorA=000000&colorB=000000)](https://npmjs.com/package/its-fine)
+[![Twitter](https://img.shields.io/twitter/follow/pmndrs?label=%40pmndrs&style=flat&colorA=000000&colorB=000000&logo=twitter&logoColor=000000)](https://twitter.com/pmndrs)
+[![Discord](https://img.shields.io/discord/740090768164651008?style=flat&colorA=000000&colorB=000000&label=discord&logo=discord&logoColor=000000)](https://discord.gg/poimandres)
 
-A collection of escape hatches exploring `React.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED`. As such you will be able to go beyond Reacts component abstraction, like injecting context into a foreign React root, or accessing the nearest parent of your component. I'm sure you want me to tell you how safe and stable this all is.
+<p align="left">
+  <a id="cover" href="#cover">
+    <img src=".github/itsfine.png" alt="It's gonna be alright" />
+  </a>
+</p>
+
+A collection of escape hatches exploring `React.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED` and React Fiber. As such, you can go beyond React's component abstraction, enabling stateless queries to access elements outside your component and sharing Context across renderers.
+
+## Table of Contents
+
+- [Installation](#installation)
+- [Hooks](#hooks)
+  - [useFiber](#useFiber)
+  - [useContainer](#useContainer)
+  - [useNearestChild](#useNearestChild)
+  - [useNearestParent](#useNearestParent)
+  - [useContextBridge](#useContextBridge)
+- [Utils](#utils)
+  - [traverseFiber](#traverseFiber)
+
+## Installation
+
+```bash
+# NPM
+npm install its-fine
+# Yarn
+yarn add its-fine
+# PNPM
+pnpm add its-fine
+```
+
+## Hooks
+
+Useful React hook abstractions for manipulating and querying from a component.
 
 ### useFiber
 
-Returns the current react-internal `Fiber`.
+Returns the current react-internal `Fiber`. This is an implementation detail of react-reconciler.
 
 ```tsx
 import * as React from 'react'
@@ -24,16 +60,19 @@ function Component() {
 
 ### useContainer
 
-Returns the current react-reconciler `Container`, which is the fiber accociated with the object given to `Reconciler.createContainer`. In react-dom `container.containerInfo` will point to the root DOM element. In react-three-fiber `container.containerInfo` will point to the zustand state.
+Returns the current react-reconciler `Container` or the Fiber created from `Reconciler.createContainer`.
+
+In react-dom, `container.containerInfo` will point to the root DOM element; in react-three-fiber, it will point to the root Zustand store.
 
 ```tsx
 import * as React from 'react'
 import { useContainer } from 'its-fine'
 
 function Component() {
-  const container = useContainer()
+  const container = useContainer<HTMLDivElement>()
 
   React.useLayoutEffect(() => {
+    // <div> (e.g. react-dom)
     console.log(container.containerInfo)
   }, [container])
 }
@@ -41,17 +80,20 @@ function Component() {
 
 ### useNearestChild
 
-Returns the nearest react-reconciler child instance.
+Returns the nearest react-reconciler child instance or the node created from `Reconciler.createInstance`.
+
+In react-dom, this would be a DOM element; in react-three-fiber this would be an `Instance` descriptor.
 
 ```tsx
 import * as React from 'react'
 import { useNearestChild } from 'its-fine'
 
 function Component() {
-  const childRef = useNearestChild()
+  const childRef = useNearestChild<HTMLDivElement>()
 
   React.useLayoutEffect(() => {
-    console.log(childRef.current) // <div> (e.g. react-dom)
+    // <div> (e.g. react-dom)
+    console.log(childRef.current)
   }, [])
 
   return <div />
@@ -60,20 +102,21 @@ function Component() {
 
 ### useNearestParent
 
-Returns the nearest react-reconciler parent instance.
+Returns the nearest react-reconciler parent instance or the node created from `Reconciler.createInstance`.
+
+In react-dom, this would be a DOM element; in react-three-fiber this would be an instance descriptor.
 
 ```tsx
 import * as React from 'react'
 import { useNearestParent } from 'its-fine'
 
 function Component() {
-  const parentRef = useNearestParent()
+  const parentRef = useNearestParent<HTMLDivElement>()
 
   React.useLayoutEffect(() => {
-    console.log(parentRef.current) // <div> (e.g. react-dom)
+    // <div> (e.g. react-dom)
+    console.log(parentRef.current)
   }, [])
-
-  return null
 }
 
 export default () => (
@@ -85,13 +128,14 @@ export default () => (
 
 ### useContextBridge
 
-React context [cannot be shared](https://github.com/pmndrs/react-three-fiber/issues/43) among multiple React roots. If you wanted to use, for instance, react-router (redux etc) in a secondary renderer, like react-three-fiber, you needed to be able to access the original context first and then [forward it](https://docs.pmnd.rs/react-three-fiber/advanced/gotchas#consuming-context-from-a-foreign-provider).
+React Context currently cannot be shared across [React renderers](https://reactjs.org/docs/codebase-overview.html#renderers) but explicitly forwarded between providers (see [react#17275](https://github.com/facebook/react/issues/17275)). This hook returns a `ContextBridge` of live context providers to pierce Context across renderers.
 
-This cumbersome practice ends here. `useContextBridge` returns a `ContextBridge` of live context providers to pierce context across renderers. Render it as the first element in your custom React renderer and its contents will be able to access host context.
+Pass `ContextBridge` as a component to a secondary renderer to enable context-sharing within its children.
 
 ```tsx
 import * as React from 'react'
-// react-nil is a custom React-renderer, usually used for testing
+// react-nil is a custom React renderer, usually used for testing.
+// This also works with react-art, react-three-fiber, etc
 import * as ReactNil from 'react-nil'
 import * as ReactDOM from 'react-dom/client'
 import { useContextBridge } from 'its-fine'
@@ -108,9 +152,13 @@ ReactDOM.createRoot(document.getElementById('root')).render(
 )
 ```
 
+## Utils
+
+Additional exported utility functions for raw handling of Fibers.
+
 ### traverseFiber
 
-Traverses through a `Fiber`, return `true` to stop traversing.
+Traverses up or down through a `Fiber`, return `true` to stop and select a node.
 
 ```ts
 import { type Fiber, traverseFiber } from 'its-fine'
