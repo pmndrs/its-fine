@@ -11,7 +11,7 @@
   </a>
 </p>
 
-A collection of escape hatches exploring `React.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED` and React Fiber. As such, you can go beyond React's component abstraction, enabling stateless queries to access elements outside your component and sharing Context across renderers.
+A collection of escape hatches exploring `React.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED` and React Fiber. As such, you can go beyond React's component abstraction, enabling stateless queries to access elements outside your components and sharing Context across renderers.
 
 ## Table of Contents
 
