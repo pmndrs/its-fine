@@ -69,9 +69,10 @@ import * as React from 'react'
 import { useContainer } from 'its-fine'
 
 function Component() {
-  const container = useContainer()
+  const container = useContainer<HTMLDivElement>()
 
   React.useLayoutEffect(() => {
+    // <div> (e.g. react-dom)
     console.log(container.containerInfo)
   }, [container])
 }
@@ -88,10 +89,11 @@ import * as React from 'react'
 import { useNearestChild } from 'its-fine'
 
 function Component() {
-  const childRef = useNearestChild()
+  const childRef = useNearestChild<HTMLDivElement>()
 
   React.useLayoutEffect(() => {
-    console.log(childRef.current) // <div> (e.g. react-dom)
+    // <div> (e.g. react-dom)
+    console.log(childRef.current)
   }, [])
 
   return <div />
@@ -109,13 +111,12 @@ import * as React from 'react'
 import { useNearestParent } from 'its-fine'
 
 function Component() {
-  const parentRef = useNearestParent()
+  const parentRef = useNearestParent<HTMLDivElement>()
 
   React.useLayoutEffect(() => {
-    console.log(parentRef.current) // <div> (e.g. react-dom)
+    // <div> (e.g. react-dom)
+    console.log(parentRef.current)
   }, [])
-
-  return null
 }
 
 export default () => (
@@ -127,13 +128,14 @@ export default () => (
 
 ### useContextBridge
 
-React Context currently cannot be shared across renderers but explicitly forwarded between providers (see [react#17275](https://github.com/facebook/react/issues/17275)). This hook returns a `ContextBridge` of live context providers to pierce Context across renderers.
+React Context currently cannot be shared across [React renderers](https://reactjs.org/docs/codebase-overview.html#renderers) but explicitly forwarded between providers (see [react#17275](https://github.com/facebook/react/issues/17275)). This hook returns a `ContextBridge` of live context providers to pierce Context across renderers.
 
 Pass `ContextBridge` as a component to a secondary renderer to enable context-sharing within its children.
 
 ```tsx
 import * as React from 'react'
-// react-nil is a custom React-renderer, usually used for testing
+// react-nil is a custom React renderer, usually used for testing.
+// This also works with react-art, react-three-fiber, etc
 import * as ReactNil from 'react-nil'
 import * as ReactDOM from 'react-dom/client'
 import { useContextBridge } from 'its-fine'
