@@ -42,7 +42,7 @@ Useful React hook abstractions for manipulating and querying from a component.
 
 ### useFiber
 
-Returns the current react-internal `Fiber`. This is an implementation detail of react-reconciler.
+Returns the current react-internal `Fiber`. This is an implementation detail of [react-reconciler](https://github.com/facebook/react/tree/main/packages/react-reconciler).
 
 ```tsx
 import * as React from 'react'

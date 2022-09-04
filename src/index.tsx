@@ -52,7 +52,7 @@ interface ReactInternal {
 const { ReactCurrentOwner } = (React as unknown as ReactInternal).__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED
 
 /**
- * Returns the current react-internal {@link Fiber}. This is an implementation detail of react-reconciler.
+ * Returns the current react-internal {@link Fiber}. This is an implementation detail of [react-reconciler](https://github.com/facebook/react/tree/main/packages/react-reconciler).
  */
 export function useFiber(): Fiber {
   const [fiber] = React.useState<Fiber>(() => ReactCurrentOwner.current!)
