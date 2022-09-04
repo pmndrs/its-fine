@@ -60,14 +60,21 @@ export function useFiber(): Fiber {
 }
 
 /**
- * Returns the current react-reconciler container.
+ * Represents a reconciler container.
  */
-export function useContainer<T = any>(): T {
+export interface Container<T = {}> {
+  containerInfo: T
+}
+
+/**
+ * Returns the current react-reconciler {@link Container}.
+ */
+export function useContainer<T = any>(): Container<T> {
   const fiber = useFiber()
   const container = React.useMemo(
     () =>
       __unsafe_traverse_fiber(fiber, (node) => node.stateNode != null && node.stateNode.containerInfo != null, true)!
-        .stateNode.containerInfo,
+        .stateNode,
     [fiber],
   )
 

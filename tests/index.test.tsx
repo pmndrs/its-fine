@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { describe, expect, it } from 'vitest'
 import { act, render, type HostContainer, type NilNode } from 'react-nil'
-import { type Fiber, useFiber, useContainer, useNearestInstance } from '../src'
+import { type Fiber, useFiber, type Container, useContainer, useNearestInstance } from '../src'
 
 interface ReactProps {
   key?: React.Key
@@ -47,7 +47,7 @@ describe('useFiber', () => {
 
 describe('useContainer', () => {
   it('gets the current react-reconciler container', async () => {
-    let currentContainer!: HostContainer | undefined
+    let currentContainer!: Container<HostContainer>
     let container!: HostContainer
 
     function Test() {
@@ -56,7 +56,7 @@ describe('useContainer', () => {
     }
     await act(async () => (container = render(<Test />)))
 
-    expect(currentContainer!).toBe(container)
+    expect(currentContainer.containerInfo).toBe(container)
   })
 })
 
