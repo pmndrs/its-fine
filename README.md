@@ -15,7 +15,6 @@ A collection of escape hatches exploring `React.__SECRET_INTERNALS_DO_NOT_USE_OR
 
 ## Table of Contents
 
-- [Installation](#installation)
 - [Hooks](#hooks)
   - [useFiber](#useFiber)
   - [useContainer](#useContainer)
@@ -24,17 +23,6 @@ A collection of escape hatches exploring `React.__SECRET_INTERNALS_DO_NOT_USE_OR
   - [useContextBridge](#useContextBridge)
 - [Utils](#utils)
   - [traverseFiber](#traverseFiber)
-
-## Installation
-
-```bash
-# NPM
-npm install its-fine
-# Yarn
-yarn add its-fine
-# PNPM
-pnpm add its-fine
-```
 
 ## Hooks
 
