@@ -87,8 +87,10 @@ export function useNearestChild<T = any>(
   const childRef = React.useRef<T>()
 
   React.useLayoutEffect(() => {
-    childRef.current = traverseFiber<T>(fiber, false, (node) =>
-      type ? node.type === type : typeof node.type === 'string',
+    childRef.current = traverseFiber<T>(
+      fiber,
+      false,
+      (node) => typeof node.type === 'string' && (type === undefined || node.type === type),
     )?.stateNode
   }, [fiber])
 
@@ -108,8 +110,10 @@ export function useNearestParent<T = any>(
   const parentRef = React.useRef<T>()
 
   React.useLayoutEffect(() => {
-    parentRef.current = traverseFiber<T>(fiber, true, (node) =>
-      type ? node.type === type : typeof node.type === 'string',
+    parentRef.current = traverseFiber<T>(
+      fiber,
+      true,
+      (node) => typeof node.type === 'string' && (type === undefined || node.type === type),
     )?.stateNode
   }, [fiber])
 
