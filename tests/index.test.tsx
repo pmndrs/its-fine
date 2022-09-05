@@ -170,8 +170,8 @@ describe('useNearestChild', () => {
   it('gets the nearest child instance', async () => {
     const instances: React.MutableRefObject<Primitive | undefined>[] = []
 
-    function Test(props: React.PropsWithChildren<{ type?: string }>) {
-      instances.push(useNearestChild<Primitive>(props.type))
+    function Test(props: React.PropsWithChildren<{ strict?: boolean }>) {
+      instances.push(useNearestChild<Primitive>(props.strict ? 'element' : undefined))
       return <>{props.children}</>
     }
 
@@ -192,7 +192,7 @@ describe('useNearestChild', () => {
               <primitive name="two" />
             </ClassComponent>
           </Test>
-          <Test type="element">
+          <Test strict>
             <primitive name="three" />
             <element name="four" />
           </Test>
@@ -208,8 +208,8 @@ describe('useNearestParent', () => {
   it('gets the nearest parent instance', async () => {
     const instances: React.MutableRefObject<Primitive | undefined>[] = []
 
-    function Test(props: React.PropsWithChildren<{ type?: string }>) {
-      instances.push(useNearestParent<Primitive>(props.type))
+    function Test(props: React.PropsWithChildren<{ strict?: boolean }>) {
+      instances.push(useNearestParent<Primitive>(props.strict ? 'element' : undefined))
       return <>{props.children}</>
     }
 
@@ -231,7 +231,7 @@ describe('useNearestParent', () => {
               </primitive>
               <element name="four">
                 <primitive name="three">
-                  <Test type="element" />
+                  <Test strict />
                 </primitive>
               </element>
             </>

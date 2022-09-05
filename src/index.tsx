@@ -81,7 +81,7 @@ export function useContainer<T = any>(): T {
  */
 export function useNearestChild<T = any>(
   /** An optional element type to filter to. */
-  type?: string,
+  type?: keyof JSX.IntrinsicElements,
 ): React.MutableRefObject<T | undefined> {
   const fiber = useFiber()
   const childRef = React.useRef<T>()
@@ -104,7 +104,7 @@ export function useNearestChild<T = any>(
  */
 export function useNearestParent<T = any>(
   /** An optional element type to filter to. */
-  type?: string,
+  type?: keyof JSX.IntrinsicElements,
 ): React.MutableRefObject<T | undefined> {
   const fiber = useFiber()
   const parentRef = React.useRef<T>()
