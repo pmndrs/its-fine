@@ -18,11 +18,11 @@ export function traverseFiber(fiber: Fiber, ascending: boolean, selector: FiberS
   let halted = false
   let selected: Fiber | undefined
 
-  let node = fiber[ascending ? 'return' : 'child']
+  let node = ascending ? fiber.return : fiber.child
   let sibling = fiber.sibling
   while (node) {
     while (sibling) {
-      halted ||= !!selector(sibling)
+      halted ||= selector(sibling) === true
       if (halted) {
         selected = sibling
         break
@@ -31,13 +31,13 @@ export function traverseFiber(fiber: Fiber, ascending: boolean, selector: FiberS
       sibling = sibling.sibling
     }
 
-    halted ||= !!selector(node)
+    halted ||= selector(node) === true
     if (halted) {
       selected = node
       break
     }
 
-    node = node[ascending ? 'return' : 'child']
+    node = ascending ? node.return : node.child
   }
 
   return selected
@@ -62,7 +62,7 @@ export function useFiber(): Fiber {
 /**
  * Represents a reconciler container.
  */
-export interface Container<T = any> extends Fiber {
+export interface Container<T = any> extends Omit<Fiber, 'containerInfo'> {
   /** Represents container state passed to {@link ReactReconciler.Reconciler.createContainer}. */
   containerInfo: T
 }
@@ -89,13 +89,13 @@ export function useContainer<T = any>(): Container<T> {
  */
 export function useNearestChild<T = any>(): React.MutableRefObject<T | undefined> {
   const fiber = useFiber()
-  const instance = React.useRef<T>()
+  const childRef = React.useRef<T>()
 
   React.useLayoutEffect(() => {
-    instance.current = traverseFiber(fiber, false, (node) => typeof node.type === 'string')?.stateNode
+    childRef.current = traverseFiber(fiber, false, (node) => typeof node.type === 'string')?.stateNode
   }, [fiber])
 
-  return instance
+  return childRef
 }
 
 /**
@@ -105,13 +105,13 @@ export function useNearestChild<T = any>(): React.MutableRefObject<T | undefined
  */
 export function useNearestParent<T = any>(): React.MutableRefObject<T | undefined> {
   const fiber = useFiber()
-  const instance = React.useRef<T>()
+  const parentRef = React.useRef<T>()
 
   React.useLayoutEffect(() => {
-    instance.current = traverseFiber(fiber, true, (node) => typeof node.type === 'string')?.stateNode
+    parentRef.current = traverseFiber(fiber, true, (node) => typeof node.type === 'string')?.stateNode
   }, [fiber])
 
-  return instance
+  return parentRef
 }
 
 /**
