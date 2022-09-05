@@ -164,7 +164,7 @@ function Component() {
   console.log(React.useContext(DOMContext))
 }
 
-// A primary renderer like react-dom or react-native,
+// Renders into a primary renderer like react-dom or react-native,
 // DOMContext wraps Canvas and is bridged into Component
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <DOMContext.Provider value="Hello from react-dom">
