@@ -75,8 +75,9 @@ import * as React from 'react'
 import { useNearestChild } from 'its-fine'
 
 function Component() {
-  // Returns a React Ref which points to the nearest child element
-  const childRef: React.MutableRefObject<HTMLDivElement | undefined> = useNearestChild<HTMLDivElement>()
+  // Returns a React Ref which points to the nearest child <div /> element.
+  // Omit the element type to match the nearest element of any kind
+  const childRef: React.MutableRefObject<HTMLDivElement | undefined> = useNearestChild<HTMLDivElement>('div')
 
   // Access child Ref on mount
   React.useEffect(() => {
@@ -101,8 +102,9 @@ import * as React from 'react'
 import { useNearestParent } from 'its-fine'
 
 function Component() {
-  // Returns a React Ref which points to the nearest parent element
-  const parentRef: React.MutableRefObject<HTMLDivElement | undefined> = useNearestParent<HTMLDivElement>()
+  // Returns a React Ref which points to the nearest parent <div /> element.
+  // Omit the element type to match the nearest element of any kind
+  const parentRef: React.MutableRefObject<HTMLDivElement | undefined> = useNearestParent<HTMLDivElement>('div')
 
   // Access parent Ref on mount
   React.useEffect(() => {
@@ -180,7 +182,7 @@ const parentDiv: Fiber<HTMLDivElement> | undefined = traverseFiber<HTMLDivElemen
   fiber as Fiber,
   // Whether to ascend and walk up the tree. Will walk down if `false`
   true,
-  // A Fiber node selector, returns the first <div /> element in JSX
+  // A Fiber node selector, returns the first match when `true` is passed
   (node: Fiber<HTMLDivElement | null>) => node.type === 'div',
 )
 ```

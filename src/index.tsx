@@ -9,14 +9,20 @@ export type Fiber<T = any> = Omit<ReactReconciler.Fiber, 'stateNode'> & { stateN
 /**
  * Represents a {@link Fiber} node selector for traversal.
  */
-export type FiberSelector<T = any> = (node: Fiber<T | null>) => boolean | void
+export type FiberSelector<T = any> = (
+  /** The current {@link Fiber} node. */
+  node: Fiber<T | null>,
+) => boolean | void
 
 /**
  * Traverses up or down a {@link Fiber}, return `true` to stop and select a node.
  */
 export function traverseFiber<T = any>(
+  /** Input Fiber to traverse. */
   fiber: Fiber,
+  /** Whether to ascend and walk up the tree. Will walk down if `false`. */
   ascending: boolean,
+  /** A Fiber node selector, returns the first match when `true` is passed */
   selector: FiberSelector<T>,
 ): Fiber<T> | undefined {
   if (selector(fiber) === true) return fiber
@@ -73,12 +79,17 @@ export function useContainer<T = any>(): T {
  *
  * In react-dom, this would be a DOM element; in react-three-fiber this would be an instance descriptor.
  */
-export function useNearestChild<T = any>(): React.MutableRefObject<T | undefined> {
+export function useNearestChild<T = any>(
+  /** An optional element type to filter to. */
+  type?: string,
+): React.MutableRefObject<T | undefined> {
   const fiber = useFiber()
   const childRef = React.useRef<T>()
 
   React.useLayoutEffect(() => {
-    childRef.current = traverseFiber<T>(fiber, false, (node) => typeof node.type === 'string')?.stateNode
+    childRef.current = traverseFiber<T>(fiber, false, (node) =>
+      type ? node.type === type : typeof node.type === 'string',
+    )?.stateNode
   }, [fiber])
 
   return childRef
@@ -89,12 +100,17 @@ export function useNearestChild<T = any>(): React.MutableRefObject<T | undefined
  *
  * In react-dom, this would be a DOM element; in react-three-fiber this would be an instance descriptor.
  */
-export function useNearestParent<T = any>(): React.MutableRefObject<T | undefined> {
+export function useNearestParent<T = any>(
+  /** An optional element type to filter to. */
+  type?: string,
+): React.MutableRefObject<T | undefined> {
   const fiber = useFiber()
   const parentRef = React.useRef<T>()
 
   React.useLayoutEffect(() => {
-    parentRef.current = traverseFiber<T>(fiber, true, (node) => typeof node.type === 'string')?.stateNode
+    parentRef.current = traverseFiber<T>(fiber, true, (node) =>
+      type ? node.type === type : typeof node.type === 'string',
+    )?.stateNode
   }, [fiber])
 
   return parentRef
