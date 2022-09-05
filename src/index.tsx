@@ -55,6 +55,15 @@ interface ReactInternal {
 
 const { ReactCurrentOwner } = (React as unknown as ReactInternal).__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED
 
+enum REACT_WORK_TAGS {
+  HOST_ROOT = 3,
+  HOST_PORTAL = 4,
+
+  HOST_COMPONENT = 5,
+
+  CONTEXT_PROVIDER = 10,
+}
+
 /**
  * Returns the current react-internal {@link Fiber}. This is an implementation detail of [react-reconciler](https://github.com/facebook/react/tree/main/packages/react-reconciler).
  */
@@ -77,17 +86,17 @@ export interface ContainerInstance<T = any> {
  */
 export function useContainer<T = any>(): T {
   const fiber = useFiber()
-  const container = React.useMemo(
+  const root = React.useMemo(
     () =>
       traverseFiber<ContainerInstance<T>>(
         fiber,
         true,
-        (node) => node.type == null && node.stateNode?.containerInfo != null,
-      )!.stateNode.containerInfo,
+        (node) => node.tag === REACT_WORK_TAGS.HOST_ROOT || node.tag === REACT_WORK_TAGS.HOST_PORTAL,
+      )!,
     [fiber],
   )
 
-  return container
+  return root!.stateNode.containerInfo
 }
 
 /**
@@ -100,7 +109,7 @@ export function useNearestChild<T = any>(): React.MutableRefObject<T | undefined
   const childRef = React.useRef<T>()
 
   React.useLayoutEffect(() => {
-    childRef.current = traverseFiber<T>(fiber, false, (node) => typeof node.type === 'string')?.stateNode
+    childRef.current = traverseFiber<T>(fiber, false, (node) => node.tag === REACT_WORK_TAGS.HOST_COMPONENT)?.stateNode
   }, [fiber])
 
   return childRef
@@ -116,7 +125,7 @@ export function useNearestParent<T = any>(): React.MutableRefObject<T | undefine
   const parentRef = React.useRef<T>()
 
   React.useLayoutEffect(() => {
-    parentRef.current = traverseFiber<T>(fiber, true, (node) => typeof node.type === 'string')?.stateNode
+    parentRef.current = traverseFiber<T>(fiber, true, (node) => node.tag === REACT_WORK_TAGS.HOST_COMPONENT)?.stateNode
   }, [fiber])
 
   return parentRef
@@ -135,14 +144,16 @@ export type ContextBridge = React.FC<React.PropsWithChildren<{}>>
 export function useContextBridge(): ContextBridge {
   const fiber = useFiber()
   const contexts = React.useMemo(() => {
-    const unique = new Set<React.Context<any>>()
+    const unique: React.Context<any>[] = []
 
     traverseFiber(fiber, true, (node) => {
-      const context = node.type?._context
-      if (context && !unique.has(context)) unique.add(context)
+      if (node.tag !== REACT_WORK_TAGS.CONTEXT_PROVIDER) return
+
+      const context = node.type._context
+      if (!unique.includes(context)) unique.push(context)
     })
 
-    return Array.from(unique)
+    return unique
   }, [fiber])
 
   return contexts.reduce(
