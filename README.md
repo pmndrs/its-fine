@@ -49,12 +49,11 @@ import * as React from 'react'
 import { type Fiber, useFiber } from 'its-fine'
 
 function Component() {
-  const fiber: Fiber = useFiber()
+  // Returns the current component's react-internal Fiber
+  const fiber: Fiber<null> = useFiber()
 
-  React.useLayoutEffect(() => {
-    // function Component() {}
-    console.log(fiber.type)
-  }, [fiber])
+  // function Component() {}
+  console.log(fiber.type)
 }
 ```
 
@@ -69,12 +68,11 @@ import * as React from 'react'
 import { useContainer } from 'its-fine'
 
 function Component() {
-  const container = useContainer<HTMLDivElement>()
+  // Returns the current renderer's root container
+  const container: HTMLDivElement = useContainer<HTMLDivElement>()
 
-  React.useLayoutEffect(() => {
-    // <div> (e.g. react-dom)
-    console.log(container)
-  }, [container])
+  // <div> (e.g. react-dom)
+  console.log(container)
 }
 ```
 
@@ -89,14 +87,17 @@ import * as React from 'react'
 import { useNearestChild } from 'its-fine'
 
 function Component() {
-  const childRef = useNearestChild<HTMLDivElement>()
+  // Returns a React Ref which points to the nearest child element
+  const childRef: React.MutableRefObject<HTMLDivElement | undefined> = useNearestChild<HTMLDivElement>()
 
-  React.useLayoutEffect(() => {
+  // Access child Ref on mount
+  React.useEffect(() => {
     // <div> (e.g. react-dom)
     const child = childRef.current
     if (child) console.log(child)
   }, [])
 
+  // A child element, can live deep down another component
   return <div />
 }
 ```
@@ -112,15 +113,18 @@ import * as React from 'react'
 import { useNearestParent } from 'its-fine'
 
 function Component() {
-  const parentRef = useNearestParent<HTMLDivElement>()
+  // Returns a React Ref which points to the nearest parent element
+  const parentRef: React.MutableRefObject<HTMLDivElement | undefined> = useNearestParent<HTMLDivElement>()
 
-  React.useLayoutEffect(() => {
+  // Access parent Ref on mount
+  React.useEffect(() => {
     // <div> (e.g. react-dom)
     const parent = parentRef.current
     if (parent) console.log(parent)
   }, [])
 }
 
+// A parent element wrapping Component, can live deep up another component
 export default () => (
   <div>
     <Component />
@@ -136,21 +140,38 @@ Pass `ContextBridge` as a component to a secondary renderer to enable context-sh
 
 ```tsx
 import * as React from 'react'
-// react-nil is a custom React renderer, usually used for testing.
-// This also works with react-art, react-three-fiber, etc
+// react-nil is a secondary renderer that is usually used for testing.
+// This also includes Fabric, react-three-fiber, etc
 import * as ReactNil from 'react-nil'
+// react-dom is a primary renderer that works on top of a secondary renderer.
+// This also includes react-native, react-pixi, etc.
 import * as ReactDOM from 'react-dom/client'
-import { useContextBridge } from 'its-fine'
+import { type ContextBridge, useContextBridge } from 'its-fine'
 
 function Canvas(props: { children: React.ReactNode }) {
-  const Bridge = useContextBridge()
+  // Returns a bridged context provider that forwards context
+  const Bridge: ContextBridge = useContextBridge()
+  // Renders children with bridged context into a secondary renderer
   ReactNil.render(<Bridge>{props.children}</Bridge>)
 }
 
+// A React Context whose provider lives in react-dom
+const DOMContext = React.createContext<string>(null!)
+
+// A component that reads from DOMContext
+function Component() {
+  // "Hello from react-dom"
+  console.log(React.useContext(DOMContext))
+}
+
+// A primary renderer like react-dom or react-native,
+// DOMContext wraps Canvas and is bridged into Component
 ReactDOM.createRoot(document.getElementById('root')!).render(
-  <Providers>
-    <Canvas />
-  </Providers>,
+  <DOMContext.Provider value="Hello from react-dom">
+    <Canvas>
+      <Component />
+    </Canvas>
+  </DOMContext.Provider>,
 )
 ```
 
@@ -165,11 +186,15 @@ Traverses up or down through a `Fiber`, return `true` to stop and select a node.
 ```ts
 import { type Fiber, traverseFiber } from 'its-fine'
 
-const ascending = true
+// Whether to ascend and walk up the tree. Will walk down if `false`
+const ascending: boolean = true
 
+// Traverses through the Fiber tree, returns the current node when `true` is passed via selector
 const parentDiv: Fiber<HTMLDivElement> | undefined = traverseFiber<HTMLDivElement>(
+  // A fiber from a composite component from `useFiber` or internally in react-reconciler
   fiber as Fiber<null>,
   ascending,
+  // A Fiber node selector, returns the first <div /> element in JSX
   (node: Fiber<HTMLDivElement | null>) => node.type === 'div',
 )
 ```
