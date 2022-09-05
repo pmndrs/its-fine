@@ -82,7 +82,7 @@ export function useContainer<T = any>(): T {
       traverseFiber<ContainerInstance<T>>(
         fiber,
         true,
-        (node) => node.type == null && node.stateNode!.containerInfo != null,
+        (node) => node.type == null && node.stateNode?.containerInfo != null,
       )!.stateNode.containerInfo,
     [fiber],
   )
