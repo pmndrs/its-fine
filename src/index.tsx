@@ -4,19 +4,23 @@ import type ReactReconciler from 'react-reconciler'
 /**
  * Represents a react-internal Fiber node.
  */
-export type Fiber = ReactReconciler.Fiber
+export type Fiber<T = any> = Omit<ReactReconciler.Fiber, 'stateNode'> & { stateNode: T }
 
 /**
  * Represents a {@link Fiber} node selector for traversal.
  */
-export type FiberSelector = (node: Fiber) => boolean | void
+export type FiberSelector<T = any> = (node: Fiber<T | null>) => boolean | void
 
 /**
  * Traverses up or down through a {@link Fiber}, return `true` to stop and select a node.
  */
-export function traverseFiber(fiber: Fiber, ascending: boolean, selector: FiberSelector): Fiber | undefined {
+export function traverseFiber<T = any>(
+  fiber: Fiber<null>,
+  ascending: boolean,
+  selector: FiberSelector<T>,
+): Fiber<T> | undefined {
   let halted = false
-  let selected: Fiber | undefined
+  let selected: Fiber<T> | undefined
 
   let node = ascending ? fiber.return : fiber.child
   let sibling = fiber.sibling
@@ -54,28 +58,32 @@ const { ReactCurrentOwner } = (React as unknown as ReactInternal).__SECRET_INTER
 /**
  * Returns the current react-internal {@link Fiber}. This is an implementation detail of [react-reconciler](https://github.com/facebook/react/tree/main/packages/react-reconciler).
  */
-export function useFiber(): Fiber {
-  const [fiber] = React.useState<Fiber>(() => ReactCurrentOwner.current!)
+export function useFiber(): Fiber<null> {
+  const [fiber] = React.useState<Fiber<null>>(() => ReactCurrentOwner.current!)
   return fiber
 }
 
 /**
- * Represents a reconciler container.
+ * Represents a react-reconciler container instance.
  */
-export interface Container<T = any> extends Omit<Fiber, 'containerInfo'> {
-  /** Represents container state passed to {@link ReactReconciler.Reconciler.createContainer}. */
+export interface ContainerInstance<T = any> {
   containerInfo: T
 }
 
 /**
- * Returns the current react-reconciler {@link Container} or the Fiber created from {@link ReactReconciler.Reconciler.createContainer}.
+ * Returns the current react-reconciler container info passed to {@link ReactReconciler.Reconciler.createContainer}.
  *
- * In react-dom, {@link Container.containerInfo} will point to the root DOM element; in react-three-fiber, it will point to the root Zustand store.
+ * In react-dom, a container will point to the root DOM element; in react-three-fiber, it will point to the root Zustand store.
  */
-export function useContainer<T = any>(): Container<T> {
+export function useContainer<T = any>(): T {
   const fiber = useFiber()
   const container = React.useMemo(
-    () => traverseFiber(fiber, true, (node) => node.type == null && node.stateNode.containerInfo != null)!.stateNode,
+    () =>
+      traverseFiber<ContainerInstance<T>>(
+        fiber,
+        true,
+        (node) => node.type == null && node.stateNode!.containerInfo != null,
+      )!.stateNode.containerInfo,
     [fiber],
   )
 
@@ -92,7 +100,7 @@ export function useNearestChild<T = any>(): React.MutableRefObject<T | undefined
   const childRef = React.useRef<T>()
 
   React.useLayoutEffect(() => {
-    childRef.current = traverseFiber(fiber, false, (node) => typeof node.type === 'string')?.stateNode
+    childRef.current = traverseFiber<T>(fiber, false, (node) => typeof node.type === 'string')?.stateNode
   }, [fiber])
 
   return childRef
@@ -108,7 +116,7 @@ export function useNearestParent<T = any>(): React.MutableRefObject<T | undefine
   const parentRef = React.useRef<T>()
 
   React.useLayoutEffect(() => {
-    parentRef.current = traverseFiber(fiber, true, (node) => typeof node.type === 'string')?.stateNode
+    parentRef.current = traverseFiber<T>(fiber, true, (node) => typeof node.type === 'string')?.stateNode
   }, [fiber])
 
   return parentRef

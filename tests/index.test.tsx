@@ -1,11 +1,12 @@
 import * as React from 'react'
 import { describe, expect, it } from 'vitest'
-import { act, render, type HostContainer, type NilNode } from 'react-nil'
+import { type NilNode, type HostContainer, act, render } from 'react-nil'
 import { create } from 'react-test-renderer'
 import {
   type Fiber,
+  type ContainerInstance,
+  traverseFiber,
   useFiber,
-  type Container,
   useContainer,
   useNearestChild,
   useNearestParent,
@@ -21,6 +22,8 @@ interface ReactProps {
 interface PrimitiveProps {
   name?: string
 }
+
+type Primitive = NilNode<PrimitiveProps>
 
 declare global {
   namespace JSX {
@@ -75,27 +78,84 @@ describe('useFiber', () => {
   })
 })
 
-describe('useContainer', () => {
-  it('gets the current react-reconciler container', async () => {
-    let currentContainer!: Container<HostContainer>
+describe('traverseFiber', () => {
+  it('iterates descending through a fiber', async () => {
+    let fiber!: Fiber
+
+    function Test() {
+      fiber = useFiber()
+      return <primitive name="child" />
+    }
+    await act(async () => {
+      render(
+        <primitive name="parent">
+          <Test />
+        </primitive>,
+      )
+    })
+
+    const traversed = [] as unknown as [child: Fiber<Primitive>]
+    traverseFiber(fiber, false, (node) => void traversed.push(node))
+
+    expect(traversed.length).toBe(1)
+
+    const [child] = traversed
+    expect(child.stateNode.props.name).toBe('child')
+  })
+
+  it('iterates ascending through a fiber', async () => {
+    let fiber!: Fiber
     let container!: HostContainer
 
     function Test() {
-      currentContainer = useContainer()
+      fiber = useFiber()
+      return <primitive name="child" />
+    }
+    await act(async () => {
+      container = render(
+        <primitive name="parent">
+          <Test />
+        </primitive>,
+      )
+    })
+
+    const traversed = [] as unknown as [
+      parent: Fiber<Primitive>,
+      rootContainer: Fiber<ContainerInstance<HostContainer>>,
+    ]
+    traverseFiber(fiber, true, (node) => void traversed.push(node))
+
+    expect(traversed.length).toBe(2)
+
+    const [parent, rootContainer] = traversed
+    expect(parent.stateNode.props.name).toBe('parent')
+    expect(rootContainer.stateNode.containerInfo).toBe(container)
+  })
+
+  it('returns the active node when halted', async () => {})
+})
+
+describe('useContainer', () => {
+  it('gets the current react-reconciler container', async () => {
+    let rootContainer!: HostContainer
+    let container!: HostContainer
+
+    function Test() {
+      rootContainer = useContainer<HostContainer>()
       return null
     }
     await act(async () => (container = render(<Test />)))
 
-    expect(currentContainer.containerInfo).toBe(container)
+    expect(rootContainer).toBe(container)
   })
 })
 
 describe('useNearestChild', () => {
   it('gets the nearest child instance', async () => {
-    const instances: React.MutableRefObject<NilNode<PrimitiveProps> | undefined>[] = []
+    const instances: React.MutableRefObject<Primitive | undefined>[] = []
 
     function Test(props: React.PropsWithChildren) {
-      instances.push(useNearestChild())
+      instances.push(useNearestChild<Primitive>())
       return <>{props.children}</>
     }
 
@@ -130,10 +190,10 @@ describe('useNearestChild', () => {
 
 describe('useNearestParent', () => {
   it('gets the nearest parent instance', async () => {
-    const instances: React.MutableRefObject<NilNode<PrimitiveProps> | undefined>[] = []
+    const instances: React.MutableRefObject<Primitive | undefined>[] = []
 
     function Test(props: React.PropsWithChildren) {
-      instances.push(useNearestParent())
+      instances.push(useNearestParent<Primitive>())
       return <>{props.children}</>
     }
 

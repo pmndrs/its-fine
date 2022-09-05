@@ -60,9 +60,9 @@ function Component() {
 
 ### useContainer
 
-Returns the current react-reconciler `Container` or the Fiber created from `Reconciler.createContainer`.
+Returns the current react-reconciler container info passed to `Reconciler.createContainer`.
 
-In react-dom, `container.containerInfo` will point to the root DOM element; in react-three-fiber, it will point to the root Zustand store.
+In react-dom, a container will point to the root DOM element; in react-three-fiber, it will point to the root Zustand store.
 
 ```tsx
 import * as React from 'react'
@@ -73,7 +73,7 @@ function Component() {
 
   React.useLayoutEffect(() => {
     // <div> (e.g. react-dom)
-    console.log(container.containerInfo)
+    console.log(container)
   }, [container])
 }
 ```
@@ -166,5 +166,10 @@ Traverses up or down through a `Fiber`, return `true` to stop and select a node.
 import { type Fiber, traverseFiber } from 'its-fine'
 
 const ascending = true
-const prevElement: Fiber = traverseFiber(fiber, ascending, (node: Fiber) => node.type === 'element')
+
+const parentDiv: Fiber<HTMLDivElement> | undefined = traverseFiber<HTMLDivElement>(
+  fiber as Fiber<null>,
+  ascending,
+  (node: Fiber<HTMLDivElement | null>) => node.type === 'div',
+)
 ```
