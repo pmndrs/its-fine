@@ -29,6 +29,7 @@ declare global {
   namespace JSX {
     interface IntrinsicElements {
       primitive: ReactProps & PrimitiveProps
+      element: ReactProps & PrimitiveProps
     }
   }
 }
@@ -169,8 +170,8 @@ describe('useNearestChild', () => {
   it('gets the nearest child instance', async () => {
     const instances: React.MutableRefObject<Primitive | undefined>[] = []
 
-    function Test(props: React.PropsWithChildren) {
-      instances.push(useNearestChild<Primitive>())
+    function Test(props: React.PropsWithChildren<{ type?: string }>) {
+      instances.push(useNearestChild<Primitive>(props.type))
       return <>{props.children}</>
     }
 
@@ -191,15 +192,15 @@ describe('useNearestChild', () => {
               <primitive name="two" />
             </ClassComponent>
           </Test>
-          <Test>
+          <Test type="element">
             <primitive name="three" />
-            <primitive name="four" />
+            <element name="four" />
           </Test>
         </>,
       )
     })
 
-    expect(instances.map((ref) => ref.current?.props?.name)).toStrictEqual([undefined, 'one', 'two', 'two', 'three'])
+    expect(instances.map((ref) => ref.current?.props?.name)).toStrictEqual([undefined, 'one', 'two', 'two', 'four'])
   })
 })
 
@@ -207,8 +208,8 @@ describe('useNearestParent', () => {
   it('gets the nearest parent instance', async () => {
     const instances: React.MutableRefObject<Primitive | undefined>[] = []
 
-    function Test(props: React.PropsWithChildren) {
-      instances.push(useNearestParent<Primitive>())
+    function Test(props: React.PropsWithChildren<{ type?: string }>) {
+      instances.push(useNearestParent<Primitive>(props.type))
       return <>{props.children}</>
     }
 
@@ -228,13 +229,25 @@ describe('useNearestParent', () => {
               <primitive name="two">
                 <Test />
               </primitive>
+              <element name="four">
+                <primitive name="three">
+                  <Test type="element" />
+                </primitive>
+              </element>
             </>
           </primitive>
         </>,
       )
     })
 
-    expect(instances.map((ref) => ref.current?.props?.name)).toStrictEqual([undefined, 'one', 'one', 'one', 'two'])
+    expect(instances.map((ref) => ref.current?.props?.name)).toStrictEqual([
+      undefined,
+      'one',
+      'one',
+      'one',
+      'two',
+      'four',
+    ])
   })
 })
 
