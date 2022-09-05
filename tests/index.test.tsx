@@ -94,12 +94,13 @@ describe('traverseFiber', () => {
       )
     })
 
-    const traversed = [] as unknown as [child: Fiber<Primitive>]
+    const traversed = [] as unknown as [self: Fiber<null>, child: Fiber<Primitive>]
     traverseFiber(fiber, false, (node) => void traversed.push(node))
 
-    expect(traversed.length).toBe(1)
+    expect(traversed.length).toBe(2)
 
-    const [child] = traversed
+    const [self, child] = traversed
+    expect(self.type).toBe(Test)
     expect(child.stateNode.props.name).toBe('child')
   })
 
@@ -120,14 +121,16 @@ describe('traverseFiber', () => {
     })
 
     const traversed = [] as unknown as [
+      self: Fiber<null>,
       parent: Fiber<Primitive>,
       rootContainer: Fiber<ContainerInstance<HostContainer>>,
     ]
     traverseFiber(fiber, true, (node) => void traversed.push(node))
 
-    expect(traversed.length).toBe(2)
+    expect(traversed.length).toBe(3)
 
-    const [parent, rootContainer] = traversed
+    const [self, parent, rootContainer] = traversed
+    expect(self.type).toBe(Test)
     expect(parent.stateNode.props.name).toBe('parent')
     expect(rootContainer.stateNode.containerInfo).toBe(container)
   })

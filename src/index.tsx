@@ -19,32 +19,15 @@ export function traverseFiber<T = any>(
   ascending: boolean,
   selector: FiberSelector<T>,
 ): Fiber<T> | undefined {
-  let halted = false
-  let selected: Fiber<T> | undefined
+  if (selector(fiber) === true) return fiber as Fiber<T>
 
-  let node = ascending ? fiber.return : fiber.child
-  let sibling = fiber.sibling
-  while (node) {
-    while (sibling) {
-      halted ||= selector(sibling) === true
-      if (halted) {
-        selected = sibling
-        break
-      }
+  let child = ascending ? fiber.return : fiber.child
+  while (child) {
+    const match = traverseFiber(child, ascending, selector)
+    if (match) return match
 
-      sibling = sibling.sibling
-    }
-
-    halted ||= selector(node) === true
-    if (halted) {
-      selected = node
-      break
-    }
-
-    node = ascending ? node.return : node.child
+    child = child.sibling
   }
-
-  return selected
 }
 
 interface ReactInternal {
@@ -77,17 +60,12 @@ export interface ContainerInstance<T = any> {
  */
 export function useContainer<T = any>(): T {
   const fiber = useFiber()
-  const container = React.useMemo(
-    () =>
-      traverseFiber<ContainerInstance<T>>(
-        fiber,
-        true,
-        (node) => node.type == null && node.stateNode?.containerInfo != null,
-      )!.stateNode.containerInfo,
+  const root = React.useMemo(
+    () => traverseFiber<ContainerInstance<T>>(fiber, true, (node) => node.stateNode?.containerInfo != null)!,
     [fiber],
   )
 
-  return container
+  return root!.stateNode.containerInfo
 }
 
 /**
@@ -135,14 +113,14 @@ export type ContextBridge = React.FC<React.PropsWithChildren<{}>>
 export function useContextBridge(): ContextBridge {
   const fiber = useFiber()
   const contexts = React.useMemo(() => {
-    const unique = new Set<React.Context<any>>()
+    const unique: React.Context<any>[] = []
 
     traverseFiber(fiber, true, (node) => {
       const context = node.type?._context
-      if (context && !unique.has(context)) unique.add(context)
+      if (context && !unique.includes(context)) unique.push(context)
     })
 
-    return Array.from(unique)
+    return unique
   }, [fiber])
 
   return contexts.reduce(
