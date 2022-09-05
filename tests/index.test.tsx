@@ -132,7 +132,19 @@ describe('traverseFiber', () => {
     expect(rootContainer.stateNode.containerInfo).toBe(container)
   })
 
-  it('returns the active node when halted', async () => {})
+  it('returns the active node when halted', async () => {
+    let fiber!: Fiber
+    let container!: HostContainer
+
+    function Test() {
+      fiber = useFiber()
+      return <primitive name="child" />
+    }
+    await act(async () => (container = render(<Test />)))
+
+    const child = traverseFiber<Primitive>(fiber, false, (node) => node.stateNode === container.head)
+    expect(child!.stateNode.props.name).toBe('child')
+  })
 })
 
 describe('useContainer', () => {
