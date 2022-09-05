@@ -147,7 +147,7 @@ function Canvas(props: { children: React.ReactNode }) {
   ReactNil.render(<Bridge>{props.children}</Bridge>)
 }
 
-ReactDOM.createRoot(document.getElementById('root')).render(
+ReactDOM.createRoot(document.getElementById('root')!).render(
   <Providers>
     <Canvas />
   </Providers>,
