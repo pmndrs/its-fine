@@ -12,14 +12,14 @@ export type Fiber<T = any> = Omit<ReactReconciler.Fiber, 'stateNode'> & { stateN
 export type FiberSelector<T = any> = (node: Fiber<T | null>) => boolean | void
 
 /**
- * Traverses up or down through a {@link Fiber}, return `true` to stop and select a node.
+ * Traverses up or down a {@link Fiber}, return `true` to stop and select a node.
  */
 export function traverseFiber<T = any>(
-  fiber: Fiber<null>,
+  fiber: Fiber,
   ascending: boolean,
   selector: FiberSelector<T>,
 ): Fiber<T> | undefined {
-  if (selector(fiber) === true) return fiber as Fiber<T>
+  if (selector(fiber) === true) return fiber
 
   let child = ascending ? fiber.return : fiber.child
   while (child) {
