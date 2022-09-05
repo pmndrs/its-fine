@@ -191,7 +191,7 @@ const ascending: boolean = true
 
 // Traverses through the Fiber tree, returns the current node when `true` is passed via selector
 const parentDiv: Fiber<HTMLDivElement> | undefined = traverseFiber<HTMLDivElement>(
-  // A fiber from a composite component from `useFiber` or internally in react-reconciler
+  // A composite component Fiber from `useFiber` or a Fiber handle from a reconciler
   fiber as Fiber<null>,
   ascending,
   // A Fiber node selector, returns the first <div /> element in JSX
