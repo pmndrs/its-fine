@@ -169,19 +169,17 @@ Additional exported utility functions for raw handling of Fibers.
 
 ### traverseFiber
 
-Traverses up or down through a `Fiber`, return `true` to stop and select a node.
+Traverses up or down a `Fiber`, return `true` to stop and select a node.
 
 ```ts
 import { type Fiber, traverseFiber } from 'its-fine'
 
-// Whether to ascend and walk up the tree. Will walk down if `false`
-const ascending: boolean = true
-
 // Traverses through the Fiber tree, returns the current node when `true` is passed via selector
 const parentDiv: Fiber<HTMLDivElement> | undefined = traverseFiber<HTMLDivElement>(
-  // A composite component Fiber from `useFiber` or a Fiber handle from a reconciler
-  fiber as Fiber<null>,
-  ascending,
+  // Input Fiber to traverse
+  fiber as Fiber,
+  // Whether to ascend and walk up the tree. Will walk down if `false`
+  true,
   // A Fiber node selector, returns the first <div /> element in JSX
   (node: Fiber<HTMLDivElement | null>) => node.type === 'div',
 )
