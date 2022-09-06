@@ -43,13 +43,12 @@ class ClassComponent extends React.Component<{ children?: React.ReactNode }> {
 describe('useFiber', () => {
   it('gets the current react-internal Fiber', async () => {
     let fiber!: Fiber
-    let container!: HostContainer
 
     function Test() {
       fiber = useFiber()
       return <primitive />
     }
-    await act(async () => (container = render(<Test />)))
+    const container = await act(async () => render(<Test />))
 
     expect(fiber).toBeDefined()
     expect(fiber.type).toBe(Test)
@@ -86,13 +85,13 @@ describe('traverseFiber', () => {
       fiber = useFiber()
       return <primitive name="child" />
     }
-    await act(async () => {
+    await act(async () =>
       render(
         <primitive name="parent">
           <Test />
         </primitive>,
-      )
-    })
+      ),
+    )
 
     const traversed = [] as unknown as [self: Fiber<null>, child: Fiber<Primitive>]
     traverseFiber(fiber, false, (node) => void traversed.push(node))
@@ -106,19 +105,18 @@ describe('traverseFiber', () => {
 
   it('iterates ascending through a fiber', async () => {
     let fiber!: Fiber
-    let container!: HostContainer
 
     function Test() {
       fiber = useFiber()
       return <primitive name="child" />
     }
-    await act(async () => {
-      container = render(
+    const container = await act(async () =>
+      render(
         <primitive name="parent">
           <Test />
         </primitive>,
-      )
-    })
+      ),
+    )
 
     const traversed = [] as unknown as [
       self: Fiber<null>,
@@ -137,13 +135,12 @@ describe('traverseFiber', () => {
 
   it('returns the active node when halted', async () => {
     let fiber!: Fiber
-    let container!: HostContainer
 
     function Test() {
       fiber = useFiber()
       return <primitive name="child" />
     }
-    await act(async () => (container = render(<Test />)))
+    const container = await act(async () => render(<Test />))
 
     const child = traverseFiber<Primitive>(fiber, false, (node) => node.stateNode === container.head)
     expect(child!.stateNode.props.name).toBe('child')
@@ -153,13 +150,12 @@ describe('traverseFiber', () => {
 describe('useContainer', () => {
   it('gets the current react-reconciler container', async () => {
     let rootContainer!: HostContainer
-    let container!: HostContainer
 
     function Test() {
       rootContainer = useContainer<HostContainer>()
       return null
     }
-    await act(async () => (container = render(<Test />)))
+    const container = await act(async () => render(<Test />))
 
     expect(rootContainer).toBe(container)
   })
@@ -268,13 +264,8 @@ describe('useContextBridge', () => {
       )
     }
 
-    function Providers(props: { children: React.ReactNode }) {
-      const [value1, setValue1] = React.useState('value1')
-      const [value2, setValue2] = React.useState('value2')
-
-      React.useLayoutEffect(() => void setValue1('value1__new'), [])
-      React.useEffect(() => void setValue2('value2__new'), [])
-
+    function Providers(props: { values: [value1: string, value2: string]; children: React.ReactNode }) {
+      const [value1, value2] = props.values
       return (
         <Context1.Provider value="invalid">
           <Context1.Provider value={value1}>
@@ -286,7 +277,15 @@ describe('useContextBridge', () => {
 
     await act(async () =>
       create(
-        <Providers>
+        <Providers values={['value1', 'value2']}>
+          <Wrapper />
+        </Providers>,
+      ),
+    )
+
+    await act(async () =>
+      create(
+        <Providers values={['value1__new', 'value2__new']}>
           <Wrapper />
         </Providers>,
       ),
