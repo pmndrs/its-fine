@@ -11,7 +11,9 @@
   </a>
 </p>
 
-A collection of escape hatches exploring `React.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED` and React Fiber. As such, you can go beyond React's component abstraction; components are self-aware and can tap into the Fiber tree. This enables powerful abstractions like stateless queries and sharing React Context across concurrent renderers.
+A collection of escape hatches exploring `React.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED`. I'm sure you want me to tell you how safe and stable this all is.
+
+As such, you can go beyond React's component abstraction; components are self-aware and can tap into the React Fiber tree. This enables powerful abstractions like stateless queries and sharing React Context across concurrent renderers.
 
 ## Table of Contents
 
