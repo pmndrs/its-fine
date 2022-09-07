@@ -67,7 +67,7 @@ export interface ContainerInstance<T = any> {
 export function useContainer<T = any>(): T {
   const fiber = useFiber()
   const root = React.useMemo(
-    () => traverseFiber<ContainerInstance<T>>(fiber, true, (node) => node.stateNode?.containerInfo != null)!,
+    () => traverseFiber<ContainerInstance<T>>(fiber, true, (node) => node.stateNode?.containerInfo != null),
     [fiber],
   )
 
@@ -137,7 +137,27 @@ export function useContextBridge(): ContextBridge {
 
     traverseFiber(fiber, true, (node) => {
       const context = node.type?._context
-      if (context && !unique.includes(context)) unique.push(context)
+      if (!context || unique.includes(context)) return
+
+      // In development, React will warn about using contexts multiple times because
+      // of the above issue. We'll hide the warning because this hook works as expected
+      // https://github.com/facebook/react/pull/12779
+      Object.defineProperties(context, {
+        _currentRenderer: {
+          get() {
+            return null
+          },
+          set() {},
+        },
+        _currentRenderer2: {
+          get() {
+            return null
+          },
+          set() {},
+        },
+      })
+
+      unique.push(context)
     })
 
     return unique

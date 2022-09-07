@@ -539,10 +539,10 @@ postcss@^8.4.16:
   resolved "https://registry.yarnpkg.com/react-is/-/react-is-18.2.0.tgz#199431eeaaa2e09f86427efbb4f1473edb47609b"
   integrity sha512-xWGDIW6x921xtzPkhiULtthJHoJvBbF3q26fzloPCK0hsvxtPVelvftw3zjbHWSkR2km9Z+4uxbDDK/6Zw9B8w==
 
-react-nil@^1.1.2:
-  version "1.1.2"
-  resolved "https://registry.yarnpkg.com/react-nil/-/react-nil-1.1.2.tgz#e6a2433734bce178cdfbaa880afb02ebd1998caa"
-  integrity sha512-nMoshjl5hwWJ4aWj933kf2bz06MCdC8Z6RT2Wx98eSzLqfsS67sRR1749Hqgldq/p8+Zh6gpZ0mUOXJlqLg3tQ==
+react-nil@^1.2.0:
+  version "1.2.0"
+  resolved "https://registry.yarnpkg.com/react-nil/-/react-nil-1.2.0.tgz#0f2e110b50cf12bdf1eebf43bfdb4b348a271c11"
+  integrity sha512-54yJ8+vFyJlZHiFBLny0RKQ0/FSG32y8pZt0oV7duxaW3lEM9pc6D2Hhnvu0TToJKPCAJ/A5XmjY8nDETxrrGg==
   dependencies:
     "@types/react-reconciler" "^0.26.7"
     react-reconciler "^0.27.0"
