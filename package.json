@@ -34,7 +34,7 @@
     "@types/react": "^18.0.17",
     "@types/react-test-renderer": "^18.0.0",
     "react": "^18.2.0",
-    "react-nil": "^1.1.2",
+    "react-nil": "^1.2.0",
     "react-test-renderer": "^18.2.0",
     "rimraf": "^3.0.2",
     "suspend-react": "^0.0.8",
