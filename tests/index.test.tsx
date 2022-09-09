@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { describe, expect, it } from 'vitest'
-import { type NilNode, type HostContainer, act, render } from 'react-nil'
+import { type NilNode, type HostContainer, act, render, createPortal } from 'react-nil'
 import { create } from 'react-test-renderer'
 import {
   type Fiber,
@@ -150,15 +150,19 @@ describe('traverseFiber', () => {
 
 describe('useContainer', () => {
   it('gets the current react-reconciler container', async () => {
-    let rootContainer!: HostContainer
+    let container!: HostContainer
 
     function Test() {
-      rootContainer = useContainer<HostContainer>()
+      container = useContainer<HostContainer>()
       return null
     }
-    const container = await act(async () => render(<Test />))
 
-    expect(rootContainer).toBe(container)
+    const rootContainer = await act(async () => render(<Test />))
+    expect(container).toBe(rootContainer)
+
+    const portalContainer: HostContainer = { head: null }
+    await act(async () => render(createPortal(<Test />, portalContainer)))
+    expect(container).toBe(portalContainer)
   })
 })
 
