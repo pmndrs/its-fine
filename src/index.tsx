@@ -18,11 +18,11 @@ export type FiberSelector<T = any> = (
  * Traverses up or down a {@link Fiber}, return `true` to stop and select a node.
  */
 export function traverseFiber<T = any>(
-  /** Input Fiber to traverse. */
+  /** Input {@link Fiber} to traverse. */
   fiber: Fiber,
   /** Whether to ascend and walk up the tree. Will walk down if `false`. */
   ascending: boolean,
-  /** A Fiber node selector, returns the first match when `true` is passed */
+  /** A {@link Fiber} node selector, returns the first match when `true` is passed. */
   selector: FiberSelector<T>,
 ): Fiber<T> | undefined {
   if (selector(fiber) === true) return fiber
@@ -139,7 +139,7 @@ export function useContextBridge(): ContextBridge {
       const context = node.type?._context
       if (!context || unique.includes(context)) return
 
-      // In development, React will warn about using contexts multiple times because
+      // In development, React will warn about using contexts between renderers because
       // of the above issue. We'll hide the warning because this hook works as expected
       // https://github.com/facebook/react/pull/12779
       Object.defineProperties(context, {
