@@ -4,13 +4,13 @@ import { type NilNode, type HostContainer, act, render, createPortal } from 'rea
 import { create } from 'react-test-renderer'
 import {
   type Fiber,
-  type ContainerInstance,
   traverseFiber,
   useFiber,
   useContainer,
   useNearestChild,
   useNearestParent,
   useContextBridge,
+  FiberProvider,
 } from '../src'
 
 interface ReactProps {
@@ -42,14 +42,36 @@ class ClassComponent extends React.Component<{ children?: React.ReactNode }> {
 }
 
 describe('useFiber', () => {
+  it('throws when used outside of a FiberProvider', async () => {
+    let threw = false
+
+    function Test() {
+      try {
+        useFiber()
+      } catch (_) {
+        threw = true
+      }
+      return null
+    }
+    await act(async () => render(<Test />))
+
+    expect(threw).toBe(true)
+  })
+
   it('gets the current react-internal Fiber', async () => {
     let fiber!: Fiber
 
     function Test() {
-      fiber = useFiber()
+      fiber = useFiber()!
       return <primitive />
     }
-    const container = await act(async () => render(<Test />))
+    const container = await act(async () =>
+      render(
+        <FiberProvider>
+          <Test />
+        </FiberProvider>,
+      ),
+    )
 
     expect(fiber).toBeDefined()
     expect(fiber.type).toBe(Test)
@@ -60,16 +82,26 @@ describe('useFiber', () => {
     const fibers: Fiber[] = []
 
     function Test() {
-      fibers.push(useFiber())
+      fibers.push(useFiber()!)
       return null
     }
 
     function Wrapper() {
-      render(<Test />)
+      render(
+        <FiberProvider>
+          <Test />
+        </FiberProvider>,
+      )
       return <Test />
     }
 
-    await act(async () => create(<Wrapper />))
+    await act(async () =>
+      create(
+        <FiberProvider>
+          <Wrapper />
+        </FiberProvider>,
+      ),
+    )
 
     const [outer, inner] = fibers
     expect(outer).not.toBe(inner)
@@ -83,14 +115,16 @@ describe('traverseFiber', () => {
     let fiber!: Fiber
 
     function Test() {
-      fiber = useFiber()
+      fiber = useFiber()!
       return <primitive name="child" />
     }
     await act(async () =>
       render(
-        <primitive name="parent">
-          <Test />
-        </primitive>,
+        <FiberProvider>
+          <primitive name="parent">
+            <Test />
+          </primitive>
+        </FiberProvider>,
       ),
     )
 
@@ -108,40 +142,41 @@ describe('traverseFiber', () => {
     let fiber!: Fiber
 
     function Test() {
-      fiber = useFiber()
+      fiber = useFiber()!
       return <primitive name="child" />
     }
     const container = await act(async () =>
       render(
-        <primitive name="parent">
-          <Test />
-        </primitive>,
+        <FiberProvider>
+          <primitive name="parent">
+            <Test />
+          </primitive>
+        </FiberProvider>,
       ),
     )
 
-    const traversed = [] as unknown as [
-      self: Fiber<null>,
-      parent: Fiber<Primitive>,
-      rootContainer: Fiber<ContainerInstance<HostContainer>>,
-    ]
+    const traversed = [] as unknown as [self: Fiber<null>, parent: Fiber<Primitive>]
     traverseFiber(fiber, true, (node) => void traversed.push(node))
 
-    expect(traversed.length).toBe(3)
-
-    const [self, parent, rootContainer] = traversed
+    const [self, parent] = traversed
     expect(self.type).toBe(Test)
     expect(parent.stateNode.props.name).toBe('parent')
-    expect(rootContainer.stateNode.containerInfo).toBe(container)
   })
 
   it('returns the active node when halted', async () => {
     let fiber!: Fiber
 
     function Test() {
-      fiber = useFiber()
+      fiber = useFiber()!
       return <primitive name="child" />
     }
-    const container = await act(async () => render(<Test />))
+    const container = await act(async () =>
+      render(
+        <FiberProvider>
+          <Test />
+        </FiberProvider>,
+      ),
+    )
 
     const child = traverseFiber<Primitive>(fiber, false, (node) => node.stateNode === container.head)
     expect(child!.stateNode.props.name).toBe('child')
@@ -153,15 +188,21 @@ describe('useContainer', () => {
     let container!: HostContainer
 
     function Test() {
-      container = useContainer<HostContainer>()
+      container = useContainer<HostContainer>()!
       return null
     }
 
-    const rootContainer = await act(async () => render(<Test />))
+    const rootContainer = await act(async () =>
+      render(
+        <FiberProvider>
+          <Test />
+        </FiberProvider>,
+      ),
+    )
     expect(container).toBe(rootContainer)
 
     const portalContainer: HostContainer = { head: null }
-    await act(async () => render(createPortal(<Test />, portalContainer)))
+    await act(async () => render(<FiberProvider>{createPortal(<Test />, portalContainer)}</FiberProvider>))
     expect(container).toBe(portalContainer)
   })
 })
@@ -177,7 +218,7 @@ describe('useNearestChild', () => {
 
     await act(async () => {
       render(
-        <>
+        <FiberProvider>
           <Test />
           <Test>
             <primitive name="one" />
@@ -196,7 +237,7 @@ describe('useNearestChild', () => {
             <primitive name="three" />
             <element name="four" />
           </Test>
-        </>,
+        </FiberProvider>,
       )
     })
 
@@ -215,7 +256,7 @@ describe('useNearestParent', () => {
 
     await act(async () => {
       render(
-        <>
+        <FiberProvider>
           <Test />
           <primitive name="one">
             <>
@@ -236,7 +277,7 @@ describe('useNearestParent', () => {
               </element>
             </>
           </primitive>
-        </>,
+        </FiberProvider>,
       )
     })
 
@@ -260,7 +301,8 @@ describe('useContextBridge', () => {
     const inner: string[] = []
 
     function Test({ secondary }: { secondary?: boolean }) {
-      ;(secondary ? inner : outer).push(React.useContext(Context1), React.useContext(Context2))
+      const target = secondary ? inner : outer
+      target.push(React.useContext(Context1), React.useContext(Context2))
 
       return null
     }
@@ -281,14 +323,16 @@ describe('useContextBridge', () => {
       )
     }
 
-    function Providers(props: { values: [value1: string, value2: string]; children: React.ReactNode }) {
+    function Providers(props: { values: [value1: string, value2?: string]; children: React.ReactNode }) {
       const [value1, value2] = props.values
       return (
-        <Context1.Provider value="invalid">
-          <Context1.Provider value={value1}>
-            <Context2.Provider value={value2}>{props.children}</Context2.Provider>
+        <FiberProvider>
+          <Context1.Provider value="invalid">
+            <Context1.Provider value={value1}>
+              {value2 ? <Context2.Provider value={value2}>{props.children}</Context2.Provider> : props.children}
+            </Context1.Provider>
           </Context1.Provider>
-        </Context1.Provider>
+        </FiberProvider>
       )
     }
 
@@ -308,7 +352,34 @@ describe('useContextBridge', () => {
       ),
     )
 
-    expect(outer).toStrictEqual(['value1', 'value2', 'value1__new', 'value2__new'])
-    expect(inner).toStrictEqual(['value1', 'value2', 'value1__new', 'value2__new'])
+    await act(async () =>
+      create(
+        <Providers values={['value1__new']}>
+          <Wrapper />
+        </Providers>,
+      ),
+    )
+
+    await act(async () =>
+      create(
+        <React.StrictMode>
+          <Providers values={['value1__new', 'value2__new']}>
+            <Wrapper />
+          </Providers>
+        </React.StrictMode>,
+      ),
+    )
+
+    expect(outer).toStrictEqual([
+      'value1',
+      'value2',
+      'value1__new',
+      'value2__new',
+      'value1__new',
+      null,
+      'value1__new',
+      'value2__new',
+    ])
+    expect(inner).toStrictEqual(outer)
   })
 })
