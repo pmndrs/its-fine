@@ -323,13 +323,13 @@ describe('useContextBridge', () => {
       )
     }
 
-    function Providers(props: { values: [value1: string, value2: string]; children: React.ReactNode }) {
+    function Providers(props: { values: [value1: string, value2?: string]; children: React.ReactNode }) {
       const [value1, value2] = props.values
       return (
         <FiberProvider>
           <Context1.Provider value="invalid">
             <Context1.Provider value={value1}>
-              <Context2.Provider value={value2}>{props.children}</Context2.Provider>
+              {value2 ? <Context2.Provider value={value2}>{props.children}</Context2.Provider> : props.children}
             </Context1.Provider>
           </Context1.Provider>
         </FiberProvider>
@@ -352,7 +352,34 @@ describe('useContextBridge', () => {
       ),
     )
 
-    expect(outer).toStrictEqual(['value1', 'value2', 'value1__new', 'value2__new'])
-    expect(inner).toStrictEqual(['value1', 'value2', 'value1__new', 'value2__new'])
+    await act(async () =>
+      create(
+        <Providers values={['value1__new']}>
+          <Wrapper />
+        </Providers>,
+      ),
+    )
+
+    await act(async () =>
+      create(
+        <React.StrictMode>
+          <Providers values={['value1__new', 'value2__new']}>
+            <Wrapper />
+          </Providers>
+        </React.StrictMode>,
+      ),
+    )
+
+    expect(outer).toStrictEqual([
+      'value1',
+      'value2',
+      'value1__new',
+      'value2__new',
+      'value1__new',
+      null,
+      'value1__new',
+      'value2__new',
+    ])
+    expect(inner).toStrictEqual(outer)
   })
 })
