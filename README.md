@@ -17,6 +17,8 @@ As such, you can go beyond React's component abstraction; components are self-aw
 
 ## Table of Contents
 
+- [Components](#components)
+  - [FiberProvider](#fiberprovider)
 - [Hooks](#hooks)
   - [useFiber](#useFiber)
   - [useContainer](#useContainer)
