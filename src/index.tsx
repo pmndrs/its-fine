@@ -36,20 +36,41 @@ export function traverseFiber<T = any>(
   }
 }
 
-interface ReactInternal {
-  __SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED: {
-    ReactCurrentOwner: React.RefObject<Fiber>
+const FiberContext = React.createContext<Fiber>(null!)
+
+/**
+ * A react-internal {@link Fiber} provider. This component binds React children to the React Fiber tree. Call its-fine hooks within this.
+ */
+export class FiberProvider extends React.Component<{ children?: React.ReactNode }> {
+  private _reactInternals!: Fiber
+
+  render() {
+    return <FiberContext.Provider value={this._reactInternals}>{this.props.children}</FiberContext.Provider>
   }
 }
-
-const { ReactCurrentOwner } = (React as unknown as ReactInternal).__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED
 
 /**
  * Returns the current react-internal {@link Fiber}. This is an implementation detail of [react-reconciler](https://github.com/facebook/react/tree/main/packages/react-reconciler).
  */
 export function useFiber(): Fiber<null> {
-  const [fiber] = React.useState<Fiber<null>>(() => ReactCurrentOwner.current!)
-  return fiber
+  const root = React.useContext(FiberContext)
+  if (!root) throw new Error('its-fine: useFiber must be called within a <FiberProvider />!')
+
+  const id = React.useId()
+  const fiber = React.useMemo(
+    () =>
+      traverseFiber<null>(root, false, (node) => {
+        let state = node.memoizedState
+        while (state) {
+          if (state.memoizedState === id) return true
+
+          state = state.next
+        }
+      }),
+    [id, root],
+  )
+
+  return fiber!
 }
 
 /**
@@ -120,10 +141,21 @@ export function useNearestParent<T = any>(
   return parentRef
 }
 
+interface ReactInternal {
+  __SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED: {
+    ReactCurrentDispatcher: React.RefObject<{ readContext<T>(context: React.Context<T>): T }>
+  }
+}
+
+const { ReactCurrentDispatcher } = (React as unknown as ReactInternal)
+  .__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED
+
 /**
  * Represents a react-context bridge provider component.
  */
 export type ContextBridge = React.FC<React.PropsWithChildren<{}>>
+
+const contexts: React.Context<any>[] = []
 
 /**
  * React Context currently cannot be shared across [React renderers](https://reactjs.org/docs/codebase-overview.html#renderers) but explicitly forwarded between providers (see [react#17275](https://github.com/facebook/react/issues/17275)). This hook returns a {@link ContextBridge} of live context providers to pierce Context across renderers.
@@ -132,46 +164,41 @@ export type ContextBridge = React.FC<React.PropsWithChildren<{}>>
  */
 export function useContextBridge(): ContextBridge {
   const fiber = useFiber()
-  const contexts = React.useMemo(() => {
-    const unique: React.Context<any>[] = []
 
-    traverseFiber(fiber, true, (node) => {
-      const context = node.type?._context
-      if (!context || unique.includes(context)) return
+  traverseFiber(fiber, true, (node) => {
+    const context = node.type?._context
+    if (!context) return
 
-      // In development, React will warn about using contexts between renderers because
-      // of the above issue. We'll hide the warning because this hook works as expected
-      // https://github.com/facebook/react/pull/12779
-      Object.defineProperties(context, {
-        _currentRenderer: {
-          get() {
-            return null
-          },
-          set() {},
+    // In development, React will warn about using contexts between renderers because
+    // of the above issue. We'll hide the warning because this hook works as expected
+    // https://github.com/facebook/react/pull/12779
+    Object.defineProperties(context, {
+      _currentRenderer: {
+        get() {
+          return null
         },
-        _currentRenderer2: {
-          get() {
-            return null
-          },
-          set() {},
+        set() {},
+      },
+      _currentRenderer2: {
+        get() {
+          return null
         },
-      })
-
-      unique.push(context)
+        set() {},
+      },
     })
 
-    return unique
-  }, [fiber])
+    if (context !== FiberContext && !contexts.includes(context)) contexts.push(context)
+  })
 
   return contexts.reduce(
     (Prev, context) => {
-      const value = React.useContext(context)
+      const value = ReactCurrentDispatcher.current?.readContext(context)
       return (props) => (
         <Prev>
           <context.Provider {...props} value={value} />
         </Prev>
       )
     },
-    (props) => <React.Fragment {...props} />,
+    (props) => <FiberProvider {...props} />,
   )
 }

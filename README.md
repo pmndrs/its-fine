@@ -26,9 +26,32 @@ As such, you can go beyond React's component abstraction; components are self-aw
 - [Utils](#utils)
   - [traverseFiber](#traverseFiber)
 
+## Components
+
+### FiberProvider
+
+A react-internal `Fiber` provider. This component binds React children to the React Fiber tree. Call its-fine hooks within this.
+
+> **Note**: pmndrs renderers like react-three-fiber implement this internally to make use of [`useContextBridge`](#usecontextbridge), so you would only need this when using hooks inside of `react-dom` or `react-native`.
+
+```tsx
+import * as ReactDOM from 'react-dom/client'
+import { FiberProvider } from 'its-fine'
+
+function App() {
+  const fiber = useFiber()
+}
+
+createRoot(document.getElementById('root')!).render(
+  <FiberProvider>
+    <App />
+  </FiberProvider>,
+)
+```
+
 ## Hooks
 
-Useful React hook abstractions for manipulating and querying from a component.
+Useful React hook abstractions for manipulating and querying from a component. These must be called within a [`FiberProvider`](#fiberprovider) component.
 
 ### useFiber
 
