@@ -4,7 +4,6 @@ import { type NilNode, type HostContainer, act, render, createPortal } from 'rea
 import { create } from 'react-test-renderer'
 import {
   type Fiber,
-  type ContainerInstance,
   traverseFiber,
   useFiber,
   useContainer,
@@ -44,11 +43,19 @@ class ClassComponent extends React.Component<{ children?: React.ReactNode }> {
 
 describe('useFiber', () => {
   it('throws when used outside of a FiberProvider', async () => {
+    let threw = false
+
     function Test() {
-      useFiber()
+      try {
+        useFiber()
+      } catch (_) {
+        threw = true
+      }
       return null
     }
-    expect(() => render(<Test />)).toThrow()
+    await act(async () => render(<Test />))
+
+    expect(threw).toBe(true)
   })
 
   it('gets the current react-internal Fiber', async () => {
@@ -148,19 +155,12 @@ describe('traverseFiber', () => {
       ),
     )
 
-    const traversed = [] as unknown as [
-      self: Fiber<null>,
-      parent: Fiber<Primitive>,
-      rootContainer: Fiber<ContainerInstance<HostContainer>>,
-    ]
+    const traversed = [] as unknown as [self: Fiber<null>, parent: Fiber<Primitive>]
     traverseFiber(fiber, true, (node) => void traversed.push(node))
 
-    expect(traversed.length).toBe(3)
-
-    const [self, parent, rootContainer] = traversed
+    const [self, parent] = traversed
     expect(self.type).toBe(Test)
     expect(parent.stateNode.props.name).toBe('parent')
-    expect(rootContainer.stateNode.containerInfo).toBe(container)
   })
 
   it('returns the active node when halted', async () => {
