@@ -65,10 +65,10 @@ import { type Fiber, useFiber } from 'its-fine'
 
 function Component() {
   // Returns the current component's react-internal Fiber
-  const fiber: Fiber<null> = useFiber()
+  const fiber: Fiber<null> | undefined = useFiber()
 
   // function Component() {}
-  console.log(fiber.type)
+  if (fiber) console.log(fiber.type)
 }
 ```
 
@@ -84,10 +84,10 @@ import { useContainer } from 'its-fine'
 
 function Component() {
   // Returns the current renderer's root container
-  const container: HTMLDivElement = useContainer<HTMLDivElement>()
+  const container: HTMLDivElement | undefined = useContainer<HTMLDivElement>()
 
   // <div> (e.g. react-dom)
-  console.log(container)
+  if (container) console.log(container)
 }
 ```
 

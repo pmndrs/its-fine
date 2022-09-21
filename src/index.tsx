@@ -19,12 +19,13 @@ export type FiberSelector<T = any> = (
  */
 export function traverseFiber<T = any>(
   /** Input {@link Fiber} to traverse. */
-  fiber: Fiber,
+  fiber: Fiber | undefined,
   /** Whether to ascend and walk up the tree. Will walk down if `false`. */
   ascending: boolean,
   /** A {@link Fiber} node selector, returns the first match when `true` is passed. */
   selector: FiberSelector<T>,
 ): Fiber<T> | undefined {
+  if (!fiber) return
   if (selector(fiber) === true) return fiber
 
   let child = ascending ? fiber.return : fiber.child
@@ -82,7 +83,7 @@ const { ReactCurrentOwner, ReactCurrentDispatcher } = (React as unknown as React
 /**
  * Returns the current react-internal {@link Fiber}. This is an implementation detail of [react-reconciler](https://github.com/facebook/react/tree/main/packages/react-reconciler).
  */
-export function useFiber(): Fiber<null> {
+export function useFiber(): Fiber<null> | undefined {
   const root = React.useContext(FiberContext)
   if (!root) throw new Error('its-fine: useFiber must be called within a <FiberProvider />!')
 
@@ -102,7 +103,7 @@ export function useFiber(): Fiber<null> {
     [root, id],
   )
 
-  return fiber!
+  return fiber
 }
 
 /**
@@ -117,14 +118,14 @@ export interface ContainerInstance<T = any> {
  *
  * In react-dom, a container will point to the root DOM element; in react-three-fiber, it will point to the root Zustand store.
  */
-export function useContainer<T = any>(): T {
+export function useContainer<T = any>(): T | undefined {
   const fiber = useFiber()
   const root = React.useMemo(
     () => traverseFiber<ContainerInstance<T>>(fiber, true, (node) => node.stateNode?.containerInfo != null),
     [fiber],
   )
 
-  return root!.stateNode.containerInfo
+  return root?.stateNode.containerInfo
 }
 
 /**
