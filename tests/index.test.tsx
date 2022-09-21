@@ -62,7 +62,7 @@ describe('useFiber', () => {
     let fiber!: Fiber
 
     function Test() {
-      fiber = useFiber()
+      fiber = useFiber()!
       return <primitive />
     }
     const container = await act(async () =>
@@ -82,7 +82,7 @@ describe('useFiber', () => {
     const fibers: Fiber[] = []
 
     function Test() {
-      fibers.push(useFiber())
+      fibers.push(useFiber()!)
       return null
     }
 
@@ -115,7 +115,7 @@ describe('traverseFiber', () => {
     let fiber!: Fiber
 
     function Test() {
-      fiber = useFiber()
+      fiber = useFiber()!
       return <primitive name="child" />
     }
     await act(async () =>
@@ -142,7 +142,7 @@ describe('traverseFiber', () => {
     let fiber!: Fiber
 
     function Test() {
-      fiber = useFiber()
+      fiber = useFiber()!
       return <primitive name="child" />
     }
     const container = await act(async () =>
@@ -167,7 +167,7 @@ describe('traverseFiber', () => {
     let fiber!: Fiber
 
     function Test() {
-      fiber = useFiber()
+      fiber = useFiber()!
       return <primitive name="child" />
     }
     const container = await act(async () =>
@@ -188,7 +188,7 @@ describe('useContainer', () => {
     let container!: HostContainer
 
     function Test() {
-      container = useContainer<HostContainer>()
+      container = useContainer<HostContainer>()!
       return null
     }
 
