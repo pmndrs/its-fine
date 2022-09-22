@@ -179,7 +179,9 @@ export function useNearestParent<T = any>(
  */
 export type ContextBridge = React.FC<React.PropsWithChildren<{}>>
 
+// Live context and their memoized values
 const contexts: React.Context<any>[] = []
+const values = new WeakMap<React.Context<any>, any>()
 
 /**
  * React Context currently cannot be shared across [React renderers](https://reactjs.org/docs/codebase-overview.html#renderers) but explicitly forwarded between providers (see [react#17275](https://github.com/facebook/react/issues/17275)). This hook returns a {@link ContextBridge} of live context providers to pierce Context across renderers.
@@ -189,20 +191,30 @@ const contexts: React.Context<any>[] = []
 export function useContextBridge(): ContextBridge {
   const fiber = useFiber()
 
+  // Collect live context
   traverseFiber(fiber, true, (node) => {
     const context = node.type?._context
     if (context && context !== FiberContext && !contexts.includes(context)) contexts.push(wrapContext(context))
   })
 
-  return contexts.reduce(
-    (Prev, context) => {
-      const value = ReactCurrentDispatcher.current?.readContext(context)
-      return (props) => (
-        <Prev>
-          <context.Provider {...props} value={value} />
-        </Prev>
-      )
-    },
-    (props) => <FiberProvider {...props} />,
+  // Update memoized values
+  for (const context of contexts) {
+    const value = ReactCurrentDispatcher.current?.readContext(context)
+    values.set(context, value)
+  }
+
+  // Flatten context and their memoized values into a `ContextBridge` provider
+  return React.useMemo(
+    () =>
+      contexts.reduce(
+        (Prev, context) => (props) =>
+          (
+            <Prev>
+              <context.Provider {...props} value={values.get(context)} />
+            </Prev>
+          ),
+        (props) => <FiberProvider {...props} />,
+      ),
+    [],
   )
 }
