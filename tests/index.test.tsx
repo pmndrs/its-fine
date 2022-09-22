@@ -336,7 +336,7 @@ describe('useContextBridge', () => {
       )
     }
 
-    await act(async () =>
+    const renderer = await act(async () =>
       create(
         <Providers values={['value1', 'value2']}>
           <Wrapper />
@@ -345,7 +345,7 @@ describe('useContextBridge', () => {
     )
 
     await act(async () =>
-      create(
+      renderer.update(
         <Providers values={['value1__new', 'value2__new']}>
           <Wrapper />
         </Providers>,
@@ -353,7 +353,7 @@ describe('useContextBridge', () => {
     )
 
     await act(async () =>
-      create(
+      renderer.update(
         <Providers values={['value1__new']}>
           <Wrapper />
         </Providers>,
@@ -361,7 +361,7 @@ describe('useContextBridge', () => {
     )
 
     await act(async () =>
-      create(
+      renderer.update(
         <React.StrictMode>
           <Providers values={['value1__new', 'value2__new']}>
             <Wrapper />
@@ -381,5 +381,39 @@ describe('useContextBridge', () => {
       'value2__new',
     ])
     expect(inner).toStrictEqual(outer)
+  })
+
+  it('does not unmount children', async () => {
+    const calls: string[] = []
+
+    const Context = React.createContext<boolean>(null!)
+
+    function Inner() {
+      React.useEffect(() => (calls.push('mount'), () => void calls.push('unmount')), [])
+      return null
+    }
+
+    function Canvas(props: { children: React.ReactNode }) {
+      const Bridge = useContextBridge()
+      render(<Bridge>{props.children}</Bridge>)
+
+      return null
+    }
+
+    function Test(props: { value: boolean }) {
+      return (
+        <FiberProvider>
+          <Context.Provider value={props.value}>
+            <Canvas>
+              <Inner />
+            </Canvas>
+          </Context.Provider>
+        </FiberProvider>
+      )
+    }
+
+    const renderer = await act(async () => create(<Test value={true} />))
+    await act(async () => renderer.update(<Test value={false} />))
+    expect(calls).toStrictEqual(['mount'])
   })
 })
