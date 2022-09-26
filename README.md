@@ -2,6 +2,7 @@
 
 [![Size](https://img.shields.io/bundlephobia/minzip/its-fine?label=gzip&style=flat&colorA=000000&colorB=000000)](https://bundlephobia.com/package/its-fine)
 [![Version](https://img.shields.io/npm/v/its-fine?style=flat&colorA=000000&colorB=000000)](https://npmjs.com/package/its-fine)
+[![Downloads](https://img.shields.io/npm/dt/its-fine.svg?style=flat&colorA=000000&colorB=000000)](https://npmjs.com/package/its-fine)
 [![Twitter](https://img.shields.io/twitter/follow/pmndrs?label=%40pmndrs&style=flat&colorA=000000&colorB=000000&logo=twitter&logoColor=000000)](https://twitter.com/pmndrs)
 [![Discord](https://img.shields.io/discord/740090768164651008?style=flat&colorA=000000&colorB=000000&label=discord&logo=discord&logoColor=000000)](https://discord.gg/poimandres)
 
@@ -142,11 +143,9 @@ function Component() {
 }
 
 // A parent element wrapping Component, can live deep up another component
-export default () => (
-  <div>
-    <Component />
-  </div>
-)
+;<div>
+  <Component />
+</div>
 ```
 
 ### useContextBridge
@@ -163,7 +162,7 @@ import * as ReactNil from 'react-nil'
 // react-dom is a primary renderer that works on top of a secondary renderer.
 // This also includes react-native, react-pixi, etc.
 import * as ReactDOM from 'react-dom/client'
-import { type ContextBridge, useContextBridge } from 'its-fine'
+import { type ContextBridge, useContextBridge, FiberProvider } from 'its-fine'
 
 function Canvas(props: { children: React.ReactNode }) {
   // Returns a bridged context provider that forwards context
@@ -184,11 +183,13 @@ function Component() {
 // Renders into a primary renderer like react-dom or react-native,
 // DOMContext wraps Canvas and is bridged into Component
 ReactDOM.createRoot(document.getElementById('root')!).render(
-  <DOMContext.Provider value="Hello from react-dom">
-    <Canvas>
-      <Component />
-    </Canvas>
-  </DOMContext.Provider>,
+  <FiberProvider>
+    <DOMContext.Provider value="Hello from react-dom">
+      <Canvas>
+        <Component />
+      </Canvas>
+    </DOMContext.Provider>
+  </FiberProvider>,
 )
 ```
 
