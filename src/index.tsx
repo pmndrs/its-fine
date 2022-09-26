@@ -192,9 +192,10 @@ export function useContextBridge(): ContextBridge {
   const fiber = useFiber()
 
   // Collect live context
+  contexts.splice(0, contexts.length)
   traverseFiber(fiber, true, (node) => {
     const context = node.type?._context
-    if (context && context !== FiberContext && !contexts.includes(context)) contexts.push(wrapContext(context))
+    if (context && context !== FiberContext) contexts.push(wrapContext(context))
   })
 
   // Update memoized values
