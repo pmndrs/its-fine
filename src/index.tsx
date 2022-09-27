@@ -41,20 +41,24 @@ export function traverseFiber<T = any>(
 // Hide the warning because its-fine fixes this issue
 // https://github.com/facebook/react/pull/12779
 function wrapContext<T>(context: React.Context<T>): React.Context<T> {
-  return Object.defineProperties(context, {
-    _currentRenderer: {
-      get() {
-        return null
+  try {
+    return Object.defineProperties(context, {
+      _currentRenderer: {
+        get() {
+          return null
+        },
+        set() {},
       },
-      set() {},
-    },
-    _currentRenderer2: {
-      get() {
-        return null
+      _currentRenderer2: {
+        get() {
+          return null
+        },
+        set() {},
       },
-      set() {},
-    },
-  })
+    })
+  } catch (_) {
+    return context
+  }
 }
 
 const FiberContext = wrapContext(React.createContext<Fiber>(null!))
