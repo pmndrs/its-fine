@@ -39,7 +39,7 @@ A react-internal `Fiber` provider. This component binds React children to the Re
 
 ```tsx
 import * as ReactDOM from 'react-dom/client'
-import { FiberProvider } from 'its-fine'
+import { FiberProvider, useFiber } from 'its-fine'
 
 function App() {
   const fiber = useFiber()
