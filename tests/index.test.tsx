@@ -148,19 +148,27 @@ describe('traverseFiber', () => {
     const container = await act(async () =>
       render(
         <FiberProvider>
-          <primitive name="parent">
-            <Test />
+          <primitive name="ancestor">
+            <primitive name="parent">
+              <Test />
+            </primitive>
+            <primitive name="other" />
           </primitive>
         </FiberProvider>,
       ),
     )
 
-    const traversed = [] as unknown as [self: Fiber<null>, parent: Fiber<Primitive>]
+    const traversed: Fiber<any>[] = [];
     traverseFiber(fiber, true, (node) => void traversed.push(node))
 
-    const [self, parent] = traversed
+    expect(traversed.filter(o => o.stateNode?.props?.name === "other").length).toBe(0)
+    expect(traversed.filter(o => o.stateNode?.props?.name === "ancestor").length).toBe(1)
+    expect(traversed.filter(o => o.stateNode?.props?.name === "parent").length).toBe(1)
+    
+    const [self, parent, ancestor] = traversed
     expect(self.type).toBe(Test)
-    expect(parent.stateNode.props.name).toBe('parent')
+    expect(parent.stateNode?.props?.name).toBe('parent')
+    expect(ancestor.stateNode?.props?.name).toBe('ancestor')
   })
 
   it('returns the active node when halted', async () => {

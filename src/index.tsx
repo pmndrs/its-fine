@@ -33,7 +33,7 @@ export function traverseFiber<T = any>(
     const match = traverseFiber(child, ascending, selector)
     if (match) return match
 
-    child = child.sibling
+    child = ascending ? null : child.sibling
   }
 }
 
