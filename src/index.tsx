@@ -190,10 +190,10 @@ export type ContextBridge = React.FC<React.PropsWithChildren<{}>>
  */
 export function useContextBridge(): ContextBridge {
   const fiber = useFiber()
-  
+
   // Live context and their memoized values
-  const contexts: React.Context<any>[] = React.useMemo(()=>[],[]);
-  const values = React.useMemo(()=>new WeakMap<React.Context<any>, any>(),[]);
+  const contexts: React.Context<any>[] = React.useMemo(() => [], [])
+  const values = React.useMemo(() => new WeakMap<React.Context<any>, any>(), [])
 
   // Collect live context
   contexts.splice(0, contexts.length)
