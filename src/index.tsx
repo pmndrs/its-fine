@@ -183,10 +183,6 @@ export function useNearestParent<T = any>(
  */
 export type ContextBridge = React.FC<React.PropsWithChildren<{}>>
 
-// Live context and their memoized values
-const contexts: React.Context<any>[] = []
-const values = new WeakMap<React.Context<any>, any>()
-
 /**
  * React Context currently cannot be shared across [React renderers](https://reactjs.org/docs/codebase-overview.html#renderers) but explicitly forwarded between providers (see [react#17275](https://github.com/facebook/react/issues/17275)). This hook returns a {@link ContextBridge} of live context providers to pierce Context across renderers.
  *
@@ -194,6 +190,10 @@ const values = new WeakMap<React.Context<any>, any>()
  */
 export function useContextBridge(): ContextBridge {
   const fiber = useFiber()
+
+  // Live context and their memoized values
+  const contexts: React.Context<any>[] = React.useMemo(() => [], [])
+  const values = React.useMemo(() => new WeakMap<React.Context<any>, any>(), [])
 
   // Collect live context
   contexts.splice(0, contexts.length)
