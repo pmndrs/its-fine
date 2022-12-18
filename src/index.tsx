@@ -190,36 +190,31 @@ export type ContextBridge = React.FC<React.PropsWithChildren<{}>>
  */
 export function useContextBridge(): ContextBridge {
   const fiber = useFiber()
-
-  // Live context and their memoized values
-  const contexts: React.Context<any>[] = React.useMemo(() => [], [])
-  const values = React.useMemo(() => new WeakMap<React.Context<any>, any>(), [])
+  const [contexts] = React.useState(() => new Map<React.Context<any>, any>())
 
   // Collect live context
-  contexts.splice(0, contexts.length)
-  traverseFiber(fiber, true, (node) => {
+  contexts.clear()
+  let node = fiber
+  while (node) {
     const context = node.type?._context
-    if (context && context !== FiberContext) contexts.push(wrapContext(context))
-  })
-
-  // Update memoized values
-  for (const context of contexts) {
-    const value = ReactCurrentDispatcher.current?.readContext(context)
-    values.set(context, value)
+    if (context && context !== FiberContext && !contexts.has(context)) {
+      contexts.set(context, ReactCurrentDispatcher.current?.readContext(wrapContext(context)))
+    }
+    node = node.return!
   }
 
   // Flatten context and their memoized values into a `ContextBridge` provider
   return React.useMemo(
     () =>
-      contexts.reduce(
+      Array.from(contexts.keys()).reduce(
         (Prev, context) => (props) =>
           (
             <Prev>
-              <context.Provider {...props} value={values.get(context)} />
+              <context.Provider {...props} value={contexts.get(context)} />
             </Prev>
           ),
         (props) => <FiberProvider {...props} />,
       ),
-    [],
+    [contexts],
   )
 }
