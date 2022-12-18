@@ -183,8 +183,6 @@ export function useNearestParent<T = any>(
  */
 export type ContextBridge = React.FC<React.PropsWithChildren<{}>>
 
-const contexts: React.Context<any>[] = []
-
 /**
  * React Context currently cannot be shared across [React renderers](https://reactjs.org/docs/codebase-overview.html#renderers) but explicitly forwarded between providers (see [react#17275](https://github.com/facebook/react/issues/17275)). This hook returns a {@link ContextBridge} of live context providers to pierce Context across renderers.
  *
@@ -192,33 +190,31 @@ const contexts: React.Context<any>[] = []
  */
 export function useContextBridge(): ContextBridge {
   const fiber = useFiber()
-  const [values] = React.useState(() => new WeakMap<React.Context<any>, any>())
+  const [contexts] = React.useState(() => new Map<React.Context<any>, any>())
 
   // Collect live context
-  contexts.splice(0, contexts.length)
-  traverseFiber(fiber, true, (node) => {
+  contexts.clear()
+  let node = fiber
+  while (node) {
     const context = node.type?._context
-    if (context && context !== FiberContext) contexts.push(wrapContext(context))
-  })
-
-  // Update memoized values
-  for (const context of contexts) {
-    const value = ReactCurrentDispatcher.current?.readContext(context)
-    values.set(context, value)
+    if (context && context !== FiberContext && !contexts.has(context)) {
+      contexts.set(context, ReactCurrentDispatcher.current?.readContext(wrapContext(context)))
+    }
+    node = node.return!
   }
 
   // Flatten context and their memoized values into a `ContextBridge` provider
   return React.useMemo(
     () =>
-      contexts.reduce(
+      Array.from(contexts.keys()).reduce(
         (Prev, context) => (props) =>
           (
             <Prev>
-              <context.Provider {...props} value={values.get(context)} />
+              <context.Provider {...props} value={contexts.get(context)} />
             </Prev>
           ),
         (props) => <FiberProvider {...props} />,
       ),
-    [],
+    [contexts],
   )
 }
