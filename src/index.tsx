@@ -81,22 +81,21 @@ interface ReactInternal {
   }
 }
 
-const { ReactCurrentOwner, ReactCurrentDispatcher } = (React as unknown as ReactInternal)
-  .__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED
+const { ReactCurrentOwner, ReactCurrentDispatcher } =
+  (React as unknown as ReactInternal).__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED ?? {}
 
 /**
  * Returns the current react-internal {@link Fiber}. This is an implementation detail of [react-reconciler](https://github.com/facebook/react/tree/main/packages/react-reconciler).
  */
 export function useFiber(): Fiber<null> | undefined {
   const root = React.useContext(FiberContext)
-  if (!root) throw new Error('its-fine: useFiber must be called within a <FiberProvider />!')
 
   // In development mode, React will expose the current component's Fiber as ReactCurrentOwner.
   // In production, we don't have this luxury and must traverse from FiberProvider via useId
   const id = React.useId()
   const fiber = React.useMemo(
     () =>
-      ReactCurrentOwner.current ??
+      ReactCurrentOwner?.current ??
       traverseFiber<null>(root, false, (node) => {
         let state = node.memoizedState
         while (state) {
@@ -198,7 +197,7 @@ export function useContextBridge(): ContextBridge {
   while (node) {
     const context = node.type?._context
     if (context && context !== FiberContext && !contexts.has(context)) {
-      contexts.set(context, ReactCurrentDispatcher.current?.readContext(wrapContext(context)))
+      contexts.set(context, ReactCurrentDispatcher?.current?.readContext(wrapContext(context)))
     }
     node = node.return!
   }
