@@ -90,6 +90,8 @@ const { ReactCurrentOwner, ReactCurrentDispatcher } =
 export function useFiber(): Fiber<null> | undefined {
   const root = React.useContext(FiberContext)
 
+  if (!root) throw new Error('No FiberProvider found. Call useFiber() within a FiberProvider.')
+
   // In development mode, React will expose the current component's Fiber as ReactCurrentOwner.
   // In production, we don't have this luxury and must traverse from FiberProvider via useId
   const id = React.useId()
