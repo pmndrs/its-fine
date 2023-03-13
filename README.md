@@ -25,6 +25,7 @@ As such, you can go beyond React's component abstraction; components are self-aw
   - [useContainer](#useContainer)
   - [useNearestChild](#useNearestChild)
   - [useNearestParent](#useNearestParent)
+  - [useContextMap](#useContextMap)
   - [useContextBridge](#useContextBridge)
 - [Utils](#utils)
   - [traverseFiber](#traverseFiber)
@@ -146,6 +147,23 @@ function Component() {
 ;<div>
   <Component />
 </div>
+```
+
+### useContextMap
+
+Returns a map of all contexts and their values.
+
+```tsx
+import * as React from 'react'
+import { useContextMap } from 'its-fine'
+
+const SomeContext = React.createContext<string>(null!)
+
+function Component() {
+  const contextMap = useContextMap()
+
+  return contextMap.get(SomeContext)
+}
 ```
 
 ### useContextBridge
