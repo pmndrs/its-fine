@@ -42,7 +42,7 @@ class ClassComponent extends React.Component<{ children?: React.ReactNode }> {
 }
 
 describe('useFiber', () => {
-  it('silently fails when used outside of a FiberProvider', async () => {
+  it('throws when used outside of a FiberProvider', async () => {
     let threw = false
 
     function Test() {
@@ -55,7 +55,7 @@ describe('useFiber', () => {
     }
     await act(async () => render(<Test />))
 
-    expect(threw).toBe(false)
+    expect(threw).toBe(true)
   })
 
   it('gets the current react-internal Fiber', async () => {
@@ -158,13 +158,13 @@ describe('traverseFiber', () => {
       ),
     )
 
-    const traversed: Fiber<any>[] = []
+    const traversed: Fiber<any>[] = [];
     traverseFiber(fiber, true, (node) => void traversed.push(node))
 
-    expect(traversed.filter((o) => o.stateNode?.props?.name === 'other').length).toBe(0)
-    expect(traversed.filter((o) => o.stateNode?.props?.name === 'ancestor').length).toBe(1)
-    expect(traversed.filter((o) => o.stateNode?.props?.name === 'parent').length).toBe(1)
-
+    expect(traversed.filter(o => o.stateNode?.props?.name === "other").length).toBe(0)
+    expect(traversed.filter(o => o.stateNode?.props?.name === "ancestor").length).toBe(1)
+    expect(traversed.filter(o => o.stateNode?.props?.name === "parent").length).toBe(1)
+    
     const [self, parent, ancestor] = traversed
     expect(self.type).toBe(Test)
     expect(parent.stateNode?.props?.name).toBe('parent')
