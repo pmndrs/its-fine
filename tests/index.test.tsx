@@ -42,7 +42,7 @@ class ClassComponent extends React.Component<{ children?: React.ReactNode }> {
 }
 
 describe('useFiber', () => {
-  it('silently fails when used outside of a FiberProvider', async () => {
+  it('throws when used outside of a FiberProvider', async () => {
     let threw = false
 
     function Test() {
@@ -55,7 +55,7 @@ describe('useFiber', () => {
     }
     await act(async () => render(<Test />))
 
-    expect(threw).toBe(false)
+    expect(threw).toBe(true)
   })
 
   it('gets the current react-internal Fiber', async () => {
