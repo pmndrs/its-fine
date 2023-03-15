@@ -178,6 +178,31 @@ export function useNearestParent<T = any>(
   return parentRef
 }
 
+export type ContextMap = Map<React.Context<any>, any> & {
+  get<T>(context: React.Context<T>): T | undefined
+}
+
+/**
+ * Returns a map of all contexts and their values.
+ */
+export function useContextMap(): ContextMap {
+  const fiber = useFiber()
+  const [contextMap] = React.useState(() => new Map<React.Context<any>, any>())
+
+  // Collect live context
+  contextMap.clear()
+  let node = fiber
+  while (node) {
+    const context = node.type?._context
+    if (context && context !== FiberContext && !contextMap.has(context)) {
+      contextMap.set(context, ReactCurrentDispatcher?.current?.readContext(wrapContext(context)))
+    }
+    node = node.return!
+  }
+
+  return contextMap
+}
+
 /**
  * Represents a react-context bridge provider component.
  */
@@ -189,32 +214,20 @@ export type ContextBridge = React.FC<React.PropsWithChildren<{}>>
  * Pass {@link ContextBridge} as a component to a secondary renderer to enable context-sharing within its children.
  */
 export function useContextBridge(): ContextBridge {
-  const fiber = useFiber()
-  const [contexts] = React.useState(() => new Map<React.Context<any>, any>())
-
-  // Collect live context
-  contexts.clear()
-  let node = fiber
-  while (node) {
-    const context = node.type?._context
-    if (context && context !== FiberContext && !contexts.has(context)) {
-      contexts.set(context, ReactCurrentDispatcher?.current?.readContext(wrapContext(context)))
-    }
-    node = node.return!
-  }
+  const contextMap = useContextMap()
 
   // Flatten context and their memoized values into a `ContextBridge` provider
   return React.useMemo(
     () =>
-      Array.from(contexts.keys()).reduce(
+      Array.from(contextMap.keys()).reduce(
         (Prev, context) => (props) =>
           (
             <Prev>
-              <context.Provider {...props} value={contexts.get(context)} />
+              <context.Provider {...props} value={contextMap.get(context)} />
             </Prev>
           ),
         (props) => <FiberProvider {...props} />,
       ),
-    [contexts],
+    [contextMap],
   )
 }
