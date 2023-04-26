@@ -95,9 +95,9 @@ export function useFiber(): Fiber<null> | undefined {
   // In production, we don't have this luxury and must traverse from FiberProvider via useId
   const id = React.useId()
   const fiber = React.useMemo(() => {
-    for (const _fiber of [ReactCurrentOwner?.current, root, root?.alternate]) {
-      if (!_fiber) continue
-      const fiber = traverseFiber<null>(_fiber, false, (node) => {
+    for (const maybeFiber of [ReactCurrentOwner?.current, root, root?.alternate]) {
+      if (!maybeFiber) continue
+      const fiber = traverseFiber<null>(maybeFiber, false, (node) => {
         let state = node.memoizedState
         while (state) {
           if (state.memoizedState === id) return true
