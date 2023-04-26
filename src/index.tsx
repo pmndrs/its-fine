@@ -94,18 +94,19 @@ export function useFiber(): Fiber<null> | undefined {
   // In development mode, React will expose the current component's Fiber as ReactCurrentOwner.
   // In production, we don't have this luxury and must traverse from FiberProvider via useId
   const id = React.useId()
-  const fiber = React.useMemo(
-    () =>
-      ReactCurrentOwner?.current ??
-      traverseFiber<null>(root, false, (node) => {
+  const fiber = React.useMemo(() => {
+    for (const maybeFiber of [ReactCurrentOwner?.current, root, root?.alternate]) {
+      if (!maybeFiber) continue
+      const fiber = traverseFiber<null>(maybeFiber, false, (node) => {
         let state = node.memoizedState
         while (state) {
           if (state.memoizedState === id) return true
           state = state.next
         }
-      }),
-    [root, id],
-  )
+      })
+      if (fiber) return fiber
+    }
+  }, [root, id])
 
   return fiber
 }
