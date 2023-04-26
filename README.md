@@ -46,7 +46,7 @@ function App() {
   const fiber = useFiber()
 }
 
-createRoot(document.getElementById('root')!).render(
+ReactDOM.createRoot(document.getElementById('root')!).render(
   <FiberProvider>
     <App />
   </FiberProvider>,
@@ -161,7 +161,6 @@ const SomeContext = React.createContext<string>(null!)
 
 function Component() {
   const contextMap = useContextMap()
-
   return contextMap.get(SomeContext)
 }
 ```
