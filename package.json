@@ -40,10 +40,10 @@
     "vitest": "^0.23.1"
   },
   "dependencies": {
-    "@types/react-reconciler": "^0.28.0"
+    "@types/react-reconciler": "*"
   },
   "peerDependencies": {
-    "react": ">=18.0"
+    "react": ">=16.8"
   },
   "scripts": {
     "build": "rimraf dist && vite build && tsc",

@@ -76,13 +76,14 @@ export class FiberProvider extends React.Component<{ children?: React.ReactNode 
 
 interface ReactInternal {
   __SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED: {
-    ReactCurrentOwner: React.RefObject<Fiber>
     ReactCurrentDispatcher: React.RefObject<{ readContext<T>(context: React.Context<T>): T }>
   }
 }
 
-const { ReactCurrentOwner, ReactCurrentDispatcher } = (React as unknown as ReactInternal)
+const { ReactCurrentDispatcher } = (React as unknown as ReactInternal)
   .__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED
+
+let i = 0
 
 /**
  * Returns the current react-internal {@link Fiber}. This is an implementation detail of [react-reconciler](https://github.com/facebook/react/tree/main/packages/react-reconciler).
@@ -91,11 +92,9 @@ export function useFiber(): Fiber<null> | undefined {
   const root = React.useContext(FiberContext)
   if (root === null) throw new Error('its-fine: useFiber must be called within a <FiberProvider />!')
 
-  // In development mode, React will expose the current component's Fiber as ReactCurrentOwner.
-  // In production, we don't have this luxury and must traverse from FiberProvider via useId
-  const id = React.useId()
+  const [id] = React.useState(() => '' + i++)
   const fiber = React.useMemo(() => {
-    for (const maybeFiber of [ReactCurrentOwner?.current, root, root?.alternate]) {
+    for (const maybeFiber of [root, root?.alternate]) {
       if (!maybeFiber) continue
       const fiber = traverseFiber<null>(maybeFiber, false, (node) => {
         let state = node.memoizedState
@@ -219,16 +218,13 @@ export function useContextBridge(): ContextBridge {
 
   // Flatten context and their memoized values into a `ContextBridge` provider
   return React.useMemo(
-    () =>
-      Array.from(contextMap.keys()).reduce(
-        (Prev, context) => (props) =>
-          (
-            <Prev>
-              <context.Provider {...props} value={contextMap.get(context)} />
-            </Prev>
-          ),
-        (props) => <FiberProvider {...props} />,
-      ),
+    () => (props) => {
+      let children = <FiberProvider {...props} />
+      for (const [context, value] of contextMap) {
+        children = <context.Provider value={value}>{children}</context.Provider>
+      }
+      return children
+    },
     [contextMap],
   )
 }
