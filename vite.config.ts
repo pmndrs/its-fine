@@ -1,12 +1,8 @@
 /// <reference types="vitest" />
 import * as path from 'path'
-import { defineConfig } from 'vite'
+import * as vite from 'vite'
 
-export default defineConfig({
-  test: {
-    dir: 'tests',
-    setupFiles: 'tests/setupTests.ts',
-  },
+export default vite.defineConfig({
   build: {
     minify: false,
     sourcemap: true,
@@ -25,4 +21,26 @@ export default defineConfig({
       },
     },
   },
+  plugins: [
+    {
+      name: 'vite-tsc',
+      generateBundle() {
+        this.emitFile({ type: 'asset', fileName: 'index.d.ts', source: `export * from '../src'` })
+      },
+    },
+    {
+      name: 'vite-minify',
+      transform(code, url) {
+        if (!url.includes('node_modules')) {
+          return vite.transformWithEsbuild(code, url)
+        }
+      },
+      renderChunk: {
+        order: 'post',
+        handler(code, { fileName }) {
+          return vite.transformWithEsbuild(code, fileName, { minify: true })
+        },
+      },
+    },
+  ],
 })

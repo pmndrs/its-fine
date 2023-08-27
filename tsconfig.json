@@ -9,8 +9,7 @@
     "jsx": "react",
     "pretty": true,
     "strict": true,
-    "declaration": true,
-    "emitDeclarationOnly": true,
+    "noEmit": true,
     "forceConsistentCasingInFileNames": true
   },
   "include": ["src/**/*"]
