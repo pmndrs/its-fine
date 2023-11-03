@@ -144,6 +144,18 @@ for (const suite of ['development', 'production']) {
     const primary = createRoot()
     const secondary = createRoot({ isPrimaryRenderer: false })
 
+    const resolved = new WeakMap<Promise<any>, boolean>()
+    function suspend<T>(value: Promise<T>): T {
+      if (resolved.get(value)) return value as T
+
+      if (!resolved.has(value)) {
+        resolved.set(value, false)
+        value.then(() => resolved.set(value, true))
+      }
+
+      throw value
+    }
+
     describe('useFiber', () => {
       it('gets the current react-internal Fiber', async () => {
         let fiber!: Fiber
@@ -156,6 +168,55 @@ for (const suite of ['development', 'production']) {
 
         expect(fiber).toBeDefined()
         expect(fiber.type).toBe(Test)
+        expect(fiber.child!.stateNode).toBe(container.head)
+      })
+
+      it('works in concurrent mode', async () => {
+        const promise = Promise.resolve()
+        function AsyncFragment(props: any) {
+          suspend(promise)
+          return props.children
+        }
+
+        let fiber!: Fiber
+
+        function Test(props: any) {
+          fiber = useFiber()!
+          return <primitive {...props} />
+        }
+        const Test1 = Test
+        const Test2 = Test
+        const Test3 = Test
+
+        // Parent
+        const container = await primary.render(
+          <AsyncFragment>
+            <Test1 />
+          </AsyncFragment>,
+        )
+        expect(fiber).toBeDefined()
+        expect(fiber.type).toBe(Test1)
+        expect(fiber.child!.stateNode).toBe(container.head)
+
+        // Child
+        await primary.render(
+          <Test2>
+            <AsyncFragment />
+          </Test2>,
+        )
+        expect(fiber).toBeDefined()
+        expect(fiber.type).toBe(Test2)
+        expect(fiber.child!.stateNode).toBe(container.head)
+
+        // Sibling
+        await primary.render(
+          <>
+            <Test3 />
+            <AsyncFragment />
+          </>,
+        )
+        expect(fiber).toBeDefined()
+        expect(fiber.type).toBe(Test3)
         expect(fiber.child!.stateNode).toBe(container.head)
       })
 
