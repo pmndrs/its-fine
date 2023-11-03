@@ -4,15 +4,27 @@ import Reconciler from 'react-reconciler'
 import { DefaultEventPriority, ConcurrentRoot } from 'react-reconciler/constants.js'
 import { type Fiber, useFiber, traverse, useContextBridge } from '../src'
 
-declare global {
-  var IS_REACT_ACT_ENVIRONMENT: boolean
-}
-
-// Let React know that we'll be testing effectful components
-global.IS_REACT_ACT_ENVIRONMENT = true
-
 // Mock scheduler to test React features
 vi.mock('scheduler', () => require('scheduler/unstable_mock'))
+
+interface ReactProps {
+  key?: React.Key
+  ref?: React.Ref<null>
+  children?: React.ReactNode
+}
+
+interface PrimitiveProps {
+  name?: string
+}
+
+declare global {
+  namespace JSX {
+    interface IntrinsicElements {
+      primitive: ReactProps & PrimitiveProps
+      element: ReactProps & PrimitiveProps
+    }
+  }
+}
 
 interface Instance<P = Record<string, unknown>> {
   type: string
@@ -107,180 +119,174 @@ const config: Reconciler.HostConfig<
   getInstanceFromScope: () => null,
 }
 
-function createRoot(overrides?: Partial<typeof config>) {
-  const container: HostContainer = { head: null }
-  const reconciler = Reconciler({ ...config, ...overrides })
-  const root = reconciler.createContainer(container, ConcurrentRoot, null, false, null, '', console.error, null)
+type _Reconciler = typeof Reconciler
 
-  return {
-    async render(element: React.ReactNode): Promise<HostContainer> {
-      await (React as any).unstable_act(() => reconciler.updateContainer(element, root, null, undefined))
-      return container
-    },
-  }
+for (const suite of ['development', 'production']) {
+  describe(`React ${suite}`, () => {
+    vi.stubEnv('NODE_ENV', suite)
+
+    const Reconciler: _Reconciler = require(suite === 'development'
+      ? '../node_modules/react-reconciler/cjs/react-reconciler.development.js'
+      : '../node_modules/react-reconciler/cjs/react-reconciler.production.min.js')
+
+    function createRoot(overrides?: Partial<typeof config>) {
+      const container: HostContainer = { head: null }
+      const reconciler = Reconciler({ ...config, ...overrides })
+      const root = reconciler.createContainer(container, ConcurrentRoot, null, false, null, '', console.error, null)
+
+      return {
+        async render(element: React.ReactNode): Promise<HostContainer> {
+          return new Promise((res) => reconciler.updateContainer(element, root, null, () => res(container)))
+        },
+      }
+    }
+
+    const primary = createRoot()
+    const secondary = createRoot({ isPrimaryRenderer: false })
+
+    describe('useFiber', () => {
+      it('gets the current react-internal Fiber', async () => {
+        let fiber!: Fiber
+
+        function Test() {
+          fiber = useFiber()!
+          return <primitive />
+        }
+        const container = await primary.render(<Test />)
+
+        expect(fiber).toBeDefined()
+        expect(fiber.type).toBe(Test)
+        expect(fiber.child!.stateNode).toBe(container.head)
+      })
+
+      it('works across concurrent renderers', async () => {
+        const fibers: Fiber[] = []
+
+        function Test() {
+          fibers.push(useFiber()!)
+          return null
+        }
+
+        function Wrapper() {
+          secondary.render(<Test />)
+          return <Test />
+        }
+
+        await primary.render(<Wrapper />)
+
+        const [outer, inner] = fibers
+        expect(outer).not.toBe(inner)
+        expect(outer.type).toBe(Test)
+        expect(inner.type).toBe(Test)
+      })
+    })
+
+    describe('traverse', () => {
+      it('iterates descending through a fiber', async () => {
+        let fiber!: Fiber
+
+        function Test() {
+          fiber = useFiber()!
+          return <primitive name="child" />
+        }
+        await primary.render(
+          <primitive name="parent">
+            <Test />
+          </primitive>,
+        )
+
+        const traversed = [] as unknown as [self: Fiber, child: Fiber]
+        traverse(fiber, (node) => void traversed.push(node), false)
+
+        expect(traversed.length).toBe(2)
+
+        const [self, child] = traversed
+        expect(self.type).toBe(Test)
+        expect(child.stateNode.props.name).toBe('child')
+      })
+
+      it('iterates ascending through a fiber', async () => {
+        let fiber!: Fiber
+
+        function Test() {
+          fiber = useFiber()!
+          return <primitive name="child" />
+        }
+        await primary.render(
+          <primitive name="ancestor">
+            <primitive name="parent">
+              <Test />
+            </primitive>
+            <primitive name="other" />
+          </primitive>,
+        )
+
+        const traversed: Fiber[] = []
+        traverse(fiber, (node) => void traversed.push(node), true)
+
+        expect(traversed.filter((o) => o.stateNode?.props?.name === 'other').length).toBe(0)
+        expect(traversed.filter((o) => o.stateNode?.props?.name === 'ancestor').length).toBe(1)
+        expect(traversed.filter((o) => o.stateNode?.props?.name === 'parent').length).toBe(1)
+
+        const [self, parent, ancestor] = traversed
+        expect(self.type).toBe(Test)
+        expect(parent.stateNode?.props?.name).toBe('parent')
+        expect(ancestor.stateNode?.props?.name).toBe('ancestor')
+      })
+
+      it('returns the active node when halted', async () => {
+        let fiber!: Fiber
+
+        function Test() {
+          fiber = useFiber()!
+          return <primitive name="child" />
+        }
+        const container = await primary.render(<Test />)
+
+        const child = traverse(fiber, (node) => node.stateNode === container.head, false)
+        expect(child!.stateNode.props.name).toBe('child')
+      })
+    })
+
+    describe('useContextBridge', () => {
+      it('forwards live context between renderers', async () => {
+        let value = -1
+        const context = React.createContext<number>(null!)
+
+        function Two() {
+          value = React.useContext(context)
+          return null
+        }
+
+        function One() {
+          const Bridge = useContextBridge()
+          secondary.render(
+            <Bridge>
+              <Two />
+            </Bridge>,
+          )
+          return null
+        }
+
+        await primary.render(<One />)
+        expect(value).toBe(null)
+
+        await primary.render(
+          <context.Provider value={1}>
+            <One />
+          </context.Provider>,
+        )
+        expect(value).toBe(1)
+
+        await primary.render(
+          <context.Provider value={2}>
+            <One />
+          </context.Provider>,
+        )
+        expect(value).toBe(2)
+      })
+    })
+
+    vi.unstubAllEnvs()
+  })
 }
-
-const primary = createRoot()
-const secondary = createRoot({ isPrimaryRenderer: false })
-
-interface ReactProps {
-  key?: React.Key
-  ref?: React.Ref<null>
-  children?: React.ReactNode
-}
-
-interface PrimitiveProps {
-  name?: string
-}
-
-declare global {
-  namespace JSX {
-    interface IntrinsicElements {
-      primitive: ReactProps & PrimitiveProps
-      element: ReactProps & PrimitiveProps
-    }
-  }
-}
-
-describe('useFiber', () => {
-  it('gets the current react-internal Fiber', async () => {
-    let fiber!: Fiber
-
-    function Test() {
-      fiber = useFiber()!
-      return <primitive />
-    }
-    const container = await primary.render(<Test />)
-
-    expect(fiber).toBeDefined()
-    expect(fiber.type).toBe(Test)
-    expect(fiber.child!.stateNode).toBe(container.head)
-  })
-
-  it('works across concurrent renderers', async () => {
-    const fibers: Fiber[] = []
-
-    function Test() {
-      fibers.push(useFiber()!)
-      return null
-    }
-
-    function Wrapper() {
-      secondary.render(<Test />)
-      return <Test />
-    }
-
-    await primary.render(<Wrapper />)
-
-    const [outer, inner] = fibers
-    expect(outer).not.toBe(inner)
-    expect(outer.type).toBe(Test)
-    expect(inner.type).toBe(Test)
-  })
-})
-
-describe('traverse', () => {
-  it('iterates descending through a fiber', async () => {
-    let fiber!: Fiber
-
-    function Test() {
-      fiber = useFiber()!
-      return <primitive name="child" />
-    }
-    await primary.render(
-      <primitive name="parent">
-        <Test />
-      </primitive>,
-    )
-
-    const traversed = [] as unknown as [self: Fiber, child: Fiber]
-    traverse(fiber, (node) => void traversed.push(node), false)
-
-    expect(traversed.length).toBe(2)
-
-    const [self, child] = traversed
-    expect(self.type).toBe(Test)
-    expect(child.stateNode.props.name).toBe('child')
-  })
-
-  it('iterates ascending through a fiber', async () => {
-    let fiber!: Fiber
-
-    function Test() {
-      fiber = useFiber()!
-      return <primitive name="child" />
-    }
-    const container = await primary.render(
-      <primitive name="ancestor">
-        <primitive name="parent">
-          <Test />
-        </primitive>
-        <primitive name="other" />
-      </primitive>,
-    )
-
-    const traversed: Fiber[] = []
-    traverse(fiber, (node) => void traversed.push(node), true)
-
-    expect(traversed.filter((o) => o.stateNode?.props?.name === 'other').length).toBe(0)
-    expect(traversed.filter((o) => o.stateNode?.props?.name === 'ancestor').length).toBe(1)
-    expect(traversed.filter((o) => o.stateNode?.props?.name === 'parent').length).toBe(1)
-
-    const [self, parent, ancestor] = traversed
-    expect(self.type).toBe(Test)
-    expect(parent.stateNode?.props?.name).toBe('parent')
-    expect(ancestor.stateNode?.props?.name).toBe('ancestor')
-  })
-
-  it('returns the active node when halted', async () => {
-    let fiber!: Fiber
-
-    function Test() {
-      fiber = useFiber()!
-      return <primitive name="child" />
-    }
-    const container = await primary.render(<Test />)
-
-    const child = traverse(fiber, (node) => node.stateNode === container.head, false)
-    expect(child!.stateNode.props.name).toBe('child')
-  })
-})
-
-describe('useContextBridge', () => {
-  it('forwards live context between renderers', async () => {
-    let value = -1
-    const context = React.createContext<number>(null!)
-
-    function Two() {
-      value = React.useContext(context)
-      return null
-    }
-
-    function One() {
-      const Bridge = useContextBridge()
-      secondary.render(
-        <Bridge>
-          <Two />
-        </Bridge>,
-      )
-      return null
-    }
-
-    await primary.render(<One />)
-    expect(value).toBe(null)
-
-    await primary.render(
-      <context.Provider value={1}>
-        <One />
-      </context.Provider>,
-    )
-    expect(value).toBe(1)
-
-    await primary.render(
-      <context.Provider value={2}>
-        <One />
-      </context.Provider>,
-    )
-    expect(value).toBe(2)
-  })
-})
