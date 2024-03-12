@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { describe, expect, it } from 'vitest'
-import { type NilNode, type HostContainer, render, createPortal } from './react-nil'
+import { type NilNode, type HostContainer, act, render, createPortal } from './react-nil'
 import { create } from 'react-test-renderer'
 import {
   type Fiber,
@@ -12,8 +12,6 @@ import {
   useContextBridge,
   FiberProvider,
 } from '../src'
-
-const act = (React as any).act as <T = any>(cb: () => Promise<T>) => Promise<T>
 
 interface ReactProps {
   key?: React.Key
