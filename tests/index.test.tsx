@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { describe, expect, it } from 'vitest'
-import { type NilNode, type HostContainer, act, render, createPortal } from './react-nil'
+import { type NilNode, type HostContainer, act, render, createPortal } from 'react-nil'
 import { create } from 'react-test-renderer'
 import {
   type Fiber,
