@@ -194,10 +194,14 @@ export function useContextMap(): ContextMap {
   contextMap.clear()
   let node = fiber
   while (node) {
-    const context = node.type?._context
-    if (context && context !== FiberContext && !contextMap.has(context)) {
-      contextMap.set(context, ReactCurrentDispatcher?.current?.readContext(wrapContext(context)))
+    if (node.type && typeof node.type === 'object') {
+      // https://github.com/facebook/react/pull/28226
+      const context = 'Provider' in node.type ? node.type : node.type._context
+      if (context && context !== FiberContext && !contextMap.has(context)) {
+        contextMap.set(context, ReactCurrentDispatcher?.current?.readContext(wrapContext(context)))
+      }
     }
+
     node = node.return!
   }
 
