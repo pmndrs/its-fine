@@ -2,6 +2,20 @@ import * as React from 'react'
 import type ReactReconciler from 'react-reconciler'
 
 /**
+ * An SSR-friendly useLayoutEffect.
+ *
+ * React currently throws a warning when using useLayoutEffect on the server.
+ * To get around it, we can conditionally useEffect on the server (no-op) and
+ * useLayoutEffect elsewhere.
+ *
+ * @see https://github.com/facebook/react/issues/14927
+ */
+const useIsomorphicLayoutEffect =
+  typeof window !== 'undefined' && (window.document?.createElement || window.navigator?.product === 'ReactNative')
+    ? React.useLayoutEffect
+    : React.useEffect
+
+/**
  * Represents a react-internal Fiber node.
  */
 export type Fiber<T = any> = Omit<ReactReconciler.Fiber, 'stateNode'> & { stateNode: T }
@@ -145,7 +159,7 @@ export function useNearestChild<T = any>(
   const fiber = useFiber()
   const childRef = React.useRef<T>()
 
-  React.useLayoutEffect(() => {
+  useIsomorphicLayoutEffect(() => {
     childRef.current = traverseFiber<T>(
       fiber,
       false,
@@ -168,7 +182,7 @@ export function useNearestParent<T = any>(
   const fiber = useFiber()
   const parentRef = React.useRef<T>()
 
-  React.useLayoutEffect(() => {
+  useIsomorphicLayoutEffect(() => {
     parentRef.current = traverseFiber<T>(
       fiber,
       true,
