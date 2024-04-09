@@ -28,25 +28,22 @@
   "sideEffects": false,
   "devDependencies": {
     "@types/node": "^18.7.15",
-    "@types/react": "^18.0.17",
-    "@types/react-test-renderer": "^18.0.0",
     "react": "^18.2.0",
-    "react-nil": "^1.2.0",
-    "react-test-renderer": "^18.2.0",
-    "rimraf": "^3.0.2",
-    "suspend-react": "^0.0.8",
-    "typescript": "^4.7.4",
-    "vite": "^3.1.0",
-    "vitest": "^0.23.1"
+    "react-reconciler": "^0.29.0",
+    "typescript": "^5.4.4",
+    "vite": "^5.2.8",
+    "vitest": "^1.4.0"
   },
   "dependencies": {
-    "@types/react-reconciler": "^0.28.0"
+    "@types/react": "*",
+    "@types/react-reconciler": "*"
   },
   "peerDependencies": {
-    "react": ">=18.0"
+    "react": ">=16.8"
   },
   "scripts": {
-    "build": "rimraf dist && vite build && tsc",
-    "test": "vitest run"
+    "build": "vite build",
+    "test": "vitest run --reporter verbose",
+    "lint": "tsc"
   }
 }
