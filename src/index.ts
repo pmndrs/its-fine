@@ -156,6 +156,9 @@ export function useNearestParent<T = any>(
   return parentRef
 }
 
+/**
+ * Represents a map of all live contexts.
+ */
 export type ContextMap = Map<Context<any>, any> & {
   get<T>(context: Context<T>): T | undefined
 }
@@ -200,13 +203,13 @@ export function useContextBridge(): ContextBridge {
   const contextMap = useContextMap()
 
   // Flatten context and their memoized values into a `ContextBridge` provider
-  return useMemo(
+  return useMemo<ContextBridge>(
     () =>
       ({ children }) => {
         for (const [context, value] of contextMap) {
           children = createElement(context.Provider, { value }, children)
         }
-        return children as any
+        return children as unknown as JSX.Element
       },
     [contextMap],
   )
