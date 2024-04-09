@@ -72,9 +72,13 @@ export function useContextBridge(): ContextBridge {
   traverse(
     fiber,
     (node) => {
-      const context = node.type?._context
-      if (context && !contextMap.has(context)) {
-        contextMap.set(context, context._currentValue)
+      if (node.type && typeof node.type === 'object') {
+        // https://github.com/facebook/react/pull/28226
+        const enableRenderableContext = node.type._context === undefined && node.type.Provider === node.type
+        const context = enableRenderableContext ? node.type : node.type._context
+        if (context && !contextMap.has(context)) {
+          contextMap.set(context, context._currentValue)
+        }
       }
     },
     true,
