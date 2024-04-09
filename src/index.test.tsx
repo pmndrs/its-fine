@@ -3,7 +3,15 @@ import * as React from 'react'
 import { vi, describe, expect, it } from 'vitest'
 import Reconciler from 'react-reconciler'
 import { DefaultEventPriority, ConcurrentRoot } from 'react-reconciler/constants.js'
-import { type Fiber, useFiber, traverseFiber, useContextBridge } from 'its-fine'
+import {
+  type Fiber,
+  useFiber,
+  traverseFiber,
+  useContextBridge,
+  useContainer,
+  useNearestChild,
+  useNearestParent,
+} from 'its-fine'
 
 // Mock scheduler to test React features
 vi.mock('scheduler', () => require('scheduler/unstable_mock'))
@@ -122,6 +130,13 @@ const config: Reconciler.HostConfig<
 
 type _Reconciler = typeof Reconciler
 
+// Classes have internal instances which would be bound to `this`
+class ClassComponent extends React.Component<{ children?: React.ReactNode }> {
+  render() {
+    return <>{this.props?.children}</>
+  }
+}
+
 for (const suite of ['development', 'production']) {
   describe(`React ${suite}`, () => {
     vi.stubEnv('NODE_ENV', suite)
@@ -130,8 +145,7 @@ for (const suite of ['development', 'production']) {
       ? '../node_modules/react-reconciler/cjs/react-reconciler.development.js'
       : '../node_modules/react-reconciler/cjs/react-reconciler.production.min.js')
 
-    function createRoot(overrides?: Partial<typeof config>) {
-      const container: HostContainer = { head: null }
+    function createRoot(container: HostContainer, overrides?: Partial<typeof config>) {
       const reconciler = Reconciler({ ...config, ...overrides })
       const root = reconciler.createContainer(container, ConcurrentRoot, null, false, null, '', console.error, null)
 
@@ -139,11 +153,17 @@ for (const suite of ['development', 'production']) {
         async render(element: React.ReactNode): Promise<HostContainer> {
           return new Promise((res) => reconciler.updateContainer(element, root, null, () => res(container)))
         },
+        createPortal(element: React.ReactNode, container: HostContainer): JSX.Element {
+          return <>{reconciler.createPortal(element, container, null, null)}</>
+        },
       }
     }
 
-    const primary = createRoot()
-    const secondary = createRoot({ isPrimaryRenderer: false })
+    const primaryContainer: HostContainer = { head: null }
+    const primary = createRoot(primaryContainer)
+
+    const secondaryContainer: HostContainer = { head: null }
+    const secondary = createRoot(secondaryContainer, { isPrimaryRenderer: false })
 
     const resolved = new WeakMap<Promise<any>, boolean>()
     function suspend<T>(value: Promise<T>): T {
@@ -346,6 +366,105 @@ for (const suite of ['development', 'production']) {
           </context.Provider>,
         )
         expect(value).toBe(2)
+      })
+    })
+
+    describe('useContainer', () => {
+      it('gets the current react-reconciler container', async () => {
+        let container!: HostContainer
+
+        function Test() {
+          container = useContainer<HostContainer>()!
+          return null
+        }
+
+        await primary.render(<Test />)
+        expect(container).toBe(primaryContainer)
+
+        const portalContainer: HostContainer = { head: null }
+        await primary.render(primary.createPortal(<Test />, portalContainer))
+        expect(container).toBe(portalContainer)
+      })
+    })
+
+    describe('useNearestChild', () => {
+      it('gets the nearest child instance', async () => {
+        const instances: React.MutableRefObject<Instance<PrimitiveProps> | undefined>[] = []
+
+        function Test(props: React.PropsWithChildren<{ strict?: boolean }>) {
+          instances.push(useNearestChild<Instance<PrimitiveProps>>(props.strict ? 'element' : undefined))
+          return <>{props.children}</>
+        }
+
+        await primary.render(
+          <>
+            <Test />
+            <Test>
+              <primitive name="one" />
+            </Test>
+            <Test>
+              <>
+                <primitive name="two" />
+              </>
+            </Test>
+            <Test>
+              <ClassComponent>
+                <primitive name="two" />
+              </ClassComponent>
+            </Test>
+            <Test strict>
+              <primitive name="three" />
+              <element name="four" />
+            </Test>
+          </>,
+        )
+
+        expect(instances.map((ref) => ref.current?.props?.name)).toStrictEqual([undefined, 'one', 'two', 'two', 'four'])
+      })
+    })
+
+    describe('useNearestParent', () => {
+      it('gets the nearest parent instance', async () => {
+        const instances: React.MutableRefObject<Instance<PrimitiveProps> | undefined>[] = []
+
+        function Test(props: React.PropsWithChildren<{ strict?: boolean }>) {
+          instances.push(useNearestParent<Instance<PrimitiveProps>>(props.strict ? 'element' : undefined))
+          return <>{props.children}</>
+        }
+
+        await primary.render(
+          <>
+            <Test />
+            <primitive name="one">
+              <>
+                <Test />
+                <>
+                  <Test />
+                </>
+                <ClassComponent>
+                  <Test />
+                </ClassComponent>
+                <primitive name="two">
+                  <Test />
+                </primitive>
+                <element name="four">
+                  <primitive name="three">
+                    <Test strict />
+                  </primitive>
+                </element>
+              </>
+            </primitive>
+          </>,
+        )
+
+        expect(instances.map((ref) => ref.current?.props?.name)).toStrictEqual([
+          undefined,
+          'one',
+          'one',
+          'one',
+          'two',
+          'four',
+        ])
       })
     })
 
