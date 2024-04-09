@@ -4,8 +4,8 @@ import * as vite from 'vite'
 export default vite.defineConfig({
   resolve: {
     alias: {
-      'its-fine': path.resolve(__dirname, 'src')
-    }
+      'its-fine': path.resolve(__dirname, 'src'),
+    },
   },
   build: {
     minify: false,
@@ -13,7 +13,7 @@ export default vite.defineConfig({
     target: 'es2018',
     lib: {
       formats: ['cjs', 'es'],
-      entry: 'src/index.tsx',
+      entry: 'src/index.ts',
       fileName: '[name]',
     },
     rollupOptions: {

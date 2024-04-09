@@ -1,4 +1,16 @@
-import * as React from 'react'
+import {
+  type MutableRefObject,
+  type Context,
+  type FC,
+  type PropsWithChildren,
+  useLayoutEffect,
+  useEffect,
+  Fragment,
+  useRef,
+  useState,
+  useMemo,
+  createElement,
+} from 'react'
 import type ReactReconciler from 'react-reconciler'
 
 /**
@@ -12,8 +24,8 @@ import type ReactReconciler from 'react-reconciler'
  */
 const useIsomorphicLayoutEffect =
   typeof window !== 'undefined' && (window.document?.createElement || window.navigator?.product === 'ReactNative')
-    ? React.useLayoutEffect
-    : React.useEffect
+    ? useLayoutEffect
+    : useEffect
 
 /**
  * Represents a react-internal Fiber node.
@@ -54,15 +66,15 @@ export function traverseFiber<T = any>(
 /**
  * @deprecated since v1.2.0.
  */
-export const FiberProvider = React.Fragment
+export const FiberProvider = Fragment
 
 /**
  * Returns the current react-internal {@link Fiber}. This is an implementation detail of [react-reconciler](https://github.com/facebook/react/tree/main/packages/react-reconciler).
  */
 export function useFiber(): Fiber<null> | undefined {
-  const fiber = React.useRef<Fiber>()
+  const fiber = useRef<Fiber>()
 
-  React.useState(() => {
+  useState(() => {
     const bind = Function.prototype.bind
     Function.prototype.bind = function (self, maybeFiber) {
       if (self === null && typeof maybeFiber?.type === 'function') {
@@ -90,7 +102,7 @@ export interface ContainerInstance<T = any> {
  */
 export function useContainer<T = any>(): T | undefined {
   const fiber = useFiber()
-  const root = React.useMemo(
+  const root = useMemo(
     () => traverseFiber<ContainerInstance<T>>(fiber, true, (node) => node.stateNode?.containerInfo != null),
     [fiber],
   )
@@ -106,9 +118,9 @@ export function useContainer<T = any>(): T | undefined {
 export function useNearestChild<T = any>(
   /** An optional element type to filter to. */
   type?: keyof JSX.IntrinsicElements,
-): React.MutableRefObject<T | undefined> {
+): MutableRefObject<T | undefined> {
   const fiber = useFiber()
-  const childRef = React.useRef<T>()
+  const childRef = useRef<T>()
 
   useIsomorphicLayoutEffect(() => {
     childRef.current = traverseFiber<T>(
@@ -129,9 +141,9 @@ export function useNearestChild<T = any>(
 export function useNearestParent<T = any>(
   /** An optional element type to filter to. */
   type?: keyof JSX.IntrinsicElements,
-): React.MutableRefObject<T | undefined> {
+): MutableRefObject<T | undefined> {
   const fiber = useFiber()
-  const parentRef = React.useRef<T>()
+  const parentRef = useRef<T>()
 
   useIsomorphicLayoutEffect(() => {
     parentRef.current = traverseFiber<T>(
@@ -144,8 +156,8 @@ export function useNearestParent<T = any>(
   return parentRef
 }
 
-export type ContextMap = Map<React.Context<any>, any> & {
-  get<T>(context: React.Context<T>): T | undefined
+export type ContextMap = Map<Context<any>, any> & {
+  get<T>(context: Context<T>): T | undefined
 }
 
 /**
@@ -153,7 +165,7 @@ export type ContextMap = Map<React.Context<any>, any> & {
  */
 export function useContextMap(): ContextMap {
   const fiber = useFiber()
-  const [contextMap] = React.useState(() => new Map<React.Context<any>, any>())
+  const [contextMap] = useState(() => new Map<Context<any>, any>())
 
   // Collect live context
   contextMap.clear()
@@ -177,7 +189,7 @@ export function useContextMap(): ContextMap {
 /**
  * Represents a react-context bridge provider component.
  */
-export type ContextBridge = React.FC<React.PropsWithChildren<{}>>
+export type ContextBridge = FC<PropsWithChildren<{}>>
 
 /**
  * React Context currently cannot be shared across [React renderers](https://reactjs.org/docs/codebase-overview.html#renderers) but explicitly forwarded between providers (see [react#17275](https://github.com/facebook/react/issues/17275)). This hook returns a {@link ContextBridge} of live context providers to pierce Context across renderers.
@@ -188,11 +200,11 @@ export function useContextBridge(): ContextBridge {
   const contextMap = useContextMap()
 
   // Flatten context and their memoized values into a `ContextBridge` provider
-  return React.useMemo(
+  return useMemo(
     () =>
       ({ children }) => {
         for (const [context, value] of contextMap) {
-          children = React.createElement(context.Provider, { value }, children)
+          children = createElement(context.Provider, { value }, children)
         }
         return children as any
       },
