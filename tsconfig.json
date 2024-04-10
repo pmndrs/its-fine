@@ -1,18 +1,17 @@
 {
   "compilerOptions": {
     "outDir": "dist",
-    "target": "ESNext",
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
+    "target": "es6",
+    "module": "ESNext",
+    "lib": ["ESNext", "dom"],
+    "moduleResolution": "node",
     "esModuleInterop": true,
     "jsx": "react",
     "pretty": true,
     "strict": true,
-    "noEmit": true,
-    "forceConsistentCasingInFileNames": true,
-    "paths": {
-      "its-fine": ["./src/index.js"]
-    }
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "forceConsistentCasingInFileNames": true
   },
   "include": ["src/**/*"]
 }

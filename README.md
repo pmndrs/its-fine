@@ -18,15 +18,46 @@ As such, you can go beyond React's component abstraction; components are self-aw
 
 ## Table of Contents
 
-- [useFiber](#useFiber)
-- [useContainer](#useContainer)
-- [useNearestChild](#useNearestChild)
-- [useNearestParent](#useNearestParent)
-- [useContextMap](#useContextMap)
-- [useContextBridge](#useContextBridge)
-- [traverseFiber](#traverseFiber)
+- [Components](#components)
+  - [FiberProvider](#fiberprovider)
+- [Hooks](#hooks)
+  - [useFiber](#useFiber)
+  - [useContainer](#useContainer)
+  - [useNearestChild](#useNearestChild)
+  - [useNearestParent](#useNearestParent)
+  - [useContextMap](#useContextMap)
+  - [useContextBridge](#useContextBridge)
+- [Utils](#utils)
+  - [traverseFiber](#traverseFiber)
 
-## useFiber
+## Components
+
+### FiberProvider
+
+A react-internal `Fiber` provider. This component binds React children to the React Fiber tree. Call its-fine hooks within this.
+
+> **Note**: pmndrs renderers like react-three-fiber implement this internally to make use of [`useContextBridge`](#usecontextbridge), so you would only need this when using hooks inside of `react-dom` or `react-native`.
+
+```tsx
+import * as ReactDOM from 'react-dom/client'
+import { FiberProvider, useFiber } from 'its-fine'
+
+function App() {
+  const fiber = useFiber()
+}
+
+ReactDOM.createRoot(document.getElementById('root')!).render(
+  <FiberProvider>
+    <App />
+  </FiberProvider>,
+)
+```
+
+## Hooks
+
+Useful React hook abstractions for manipulating and querying from a component. These must be called within a [`FiberProvider`](#fiberprovider) component.
+
+### useFiber
 
 Returns the current react-internal `Fiber`. This is an implementation detail of [react-reconciler](https://github.com/facebook/react/tree/main/packages/react-reconciler).
 
@@ -43,7 +74,7 @@ function Component() {
 }
 ```
 
-## useContainer
+### useContainer
 
 Returns the current react-reconciler container info passed to `Reconciler.createContainer`.
 
@@ -62,7 +93,7 @@ function Component() {
 }
 ```
 
-## useNearestChild
+### useNearestChild
 
 Returns the nearest react-reconciler child instance or the node created from `Reconciler.createInstance`.
 
@@ -89,7 +120,7 @@ function Component() {
 }
 ```
 
-## useNearestParent
+### useNearestParent
 
 Returns the nearest react-reconciler parent instance or the node created from `Reconciler.createInstance`.
 
@@ -118,7 +149,7 @@ function Component() {
 </div>
 ```
 
-## useContextMap
+### useContextMap
 
 Returns a map of all contexts and their values.
 
@@ -134,7 +165,7 @@ function Component() {
 }
 ```
 
-## useContextBridge
+### useContextBridge
 
 React Context currently cannot be shared across [React renderers](https://reactjs.org/docs/codebase-overview.html#renderers) but explicitly forwarded between providers (see [react#17275](https://github.com/facebook/react/issues/17275)). This hook returns a `ContextBridge` of live context providers to pierce Context across renderers.
 
@@ -148,7 +179,7 @@ import * as ReactNil from 'react-nil'
 // react-dom is a primary renderer that works on top of a secondary renderer.
 // This also includes react-native, react-pixi, etc.
 import * as ReactDOM from 'react-dom/client'
-import { type ContextBridge, useContextBridge } from 'its-fine'
+import { type ContextBridge, useContextBridge, FiberProvider } from 'its-fine'
 
 function Canvas(props: { children: React.ReactNode }) {
   // Returns a bridged context provider that forwards context
@@ -169,15 +200,21 @@ function Component() {
 // Renders into a primary renderer like react-dom or react-native,
 // DOMContext wraps Canvas and is bridged into Component
 ReactDOM.createRoot(document.getElementById('root')!).render(
-  <DOMContext.Provider value="Hello from react-dom">
-    <Canvas>
-      <Component />
-    </Canvas>
-  </DOMContext.Provider>
+  <FiberProvider>
+    <DOMContext.Provider value="Hello from react-dom">
+      <Canvas>
+        <Component />
+      </Canvas>
+    </DOMContext.Provider>
+  </FiberProvider>,
 )
 ```
 
-## traverseFiber
+## Utils
+
+Additional exported utility functions for raw handling of Fibers.
+
+### traverseFiber
 
 Traverses up or down a `Fiber`, return `true` to stop and select a node.
 

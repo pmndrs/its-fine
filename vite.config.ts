@@ -1,11 +1,11 @@
-import * as path from 'node:path'
-import * as vite from 'vite'
+/// <reference types="vitest" />
+import * as path from 'path'
+import { defineConfig } from 'vite'
 
-export default vite.defineConfig({
-  resolve: {
-    alias: {
-      'its-fine': path.resolve(__dirname, 'src'),
-    },
+export default defineConfig({
+  test: {
+    dir: 'tests',
+    setupFiles: 'tests/setupTests.ts',
   },
   build: {
     minify: false,
@@ -13,7 +13,7 @@ export default vite.defineConfig({
     target: 'es2018',
     lib: {
       formats: ['cjs', 'es'],
-      entry: 'src/index.ts',
+      entry: 'src/index.tsx',
       fileName: '[name]',
     },
     rollupOptions: {
@@ -25,26 +25,4 @@ export default vite.defineConfig({
       },
     },
   },
-  plugins: [
-    {
-      name: 'vite-tsc',
-      generateBundle() {
-        this.emitFile({ type: 'asset', fileName: 'index.d.ts', source: `export * from '../src'` })
-      },
-    },
-    {
-      name: 'vite-minify',
-      transform(code, url) {
-        if (!url.includes('node_modules')) {
-          return vite.transformWithEsbuild(code, url, { target: 'es2018' })
-        }
-      },
-      renderChunk: {
-        order: 'post',
-        handler(code, { fileName }) {
-          return vite.transformWithEsbuild(code, fileName, { minify: true, target: 'es2018' })
-        },
-      },
-    },
-  ],
 })
