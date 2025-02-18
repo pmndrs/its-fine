@@ -4,7 +4,7 @@
     "target": "es6",
     "module": "ESNext",
     "lib": ["ESNext", "dom"],
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "esModuleInterop": true,
     "jsx": "react",
     "pretty": true,
@@ -13,5 +13,6 @@
     "emitDeclarationOnly": true,
     "forceConsistentCasingInFileNames": true
   },
-  "include": ["src/**/*"]
+  "include": ["src/**/*"],
+  "exclude": ["src/**/*.test.*"]
 }
