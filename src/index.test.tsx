@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { describe, expect, it } from 'vitest'
-import { type NilNode, type HostContainer, act, render, createPortal } from 'react-nil'
+import { type NilNode, type HostContainer, render, createPortal } from 'react-nil'
 import { create } from 'react-test-renderer'
 import {
   type Fiber,
@@ -11,7 +11,14 @@ import {
   useNearestParent,
   useContextBridge,
   FiberProvider,
-} from '../src'
+} from './index'
+
+declare global {
+  var IS_REACT_ACT_ENVIRONMENT: boolean
+}
+
+// Let React know that we'll be testing effectful components
+global.IS_REACT_ACT_ENVIRONMENT = true
 
 interface ReactProps {
   key?: React.Key
@@ -25,7 +32,7 @@ interface PrimitiveProps {
 
 type Primitive = NilNode<PrimitiveProps>
 
-declare global {
+declare module 'react' {
   namespace JSX {
     interface IntrinsicElements {
       primitive: ReactProps & PrimitiveProps
@@ -40,6 +47,8 @@ class ClassComponent extends React.Component<{ children?: React.ReactNode }> {
     return <>{this.props?.children}</>
   }
 }
+
+const act = React.act
 
 describe('useFiber', () => {
   it('throws when used outside of a FiberProvider', async () => {

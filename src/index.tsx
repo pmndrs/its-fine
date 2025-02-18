@@ -10,10 +10,10 @@ import type ReactReconciler from 'react-reconciler'
  *
  * @see https://github.com/facebook/react/issues/14927
  */
-const useIsomorphicLayoutEffect =
-  typeof window !== 'undefined' && (window.document?.createElement || window.navigator?.product === 'ReactNative')
-    ? React.useLayoutEffect
-    : React.useEffect
+const useIsomorphicLayoutEffect = /* @__PURE__ */ (() =>
+  typeof window !== 'undefined' && (window.document?.createElement || window.navigator?.product === 'ReactNative'))()
+  ? React.useLayoutEffect
+  : React.useEffect
 
 /**
  * Represents a react-internal Fiber node.
@@ -75,18 +75,7 @@ function wrapContext<T>(context: React.Context<T>): React.Context<T> {
   }
 }
 
-const error = console.error
-console.error = function () {
-  const message = [...arguments].join('')
-  if (message?.startsWith('Warning:') && message.includes('useContext')) {
-    console.error = error
-    return
-  }
-
-  return error.apply(this, arguments as any)
-}
-
-const FiberContext = wrapContext(React.createContext<Fiber>(null!))
+const FiberContext = /* @__PURE__ */ wrapContext(/* @__PURE__ */ React.createContext<Fiber>(null!))
 
 /**
  * A react-internal {@link Fiber} provider. This component binds React children to the React Fiber tree. Call its-fine hooks within this.
@@ -153,10 +142,10 @@ export function useContainer<T = any>(): T | undefined {
  */
 export function useNearestChild<T = any>(
   /** An optional element type to filter to. */
-  type?: keyof JSX.IntrinsicElements,
-): React.MutableRefObject<T | undefined> {
+  type?: keyof React.JSX.IntrinsicElements,
+): React.RefObject<T | undefined> {
   const fiber = useFiber()
-  const childRef = React.useRef<T>()
+  const childRef = React.useRef<T>(undefined)
 
   useIsomorphicLayoutEffect(() => {
     childRef.current = traverseFiber<T>(
@@ -176,10 +165,10 @@ export function useNearestChild<T = any>(
  */
 export function useNearestParent<T = any>(
   /** An optional element type to filter to. */
-  type?: keyof JSX.IntrinsicElements,
-): React.MutableRefObject<T | undefined> {
+  type?: keyof React.JSX.IntrinsicElements,
+): React.RefObject<T | undefined> {
   const fiber = useFiber()
-  const parentRef = React.useRef<T>()
+  const parentRef = React.useRef<T>(undefined)
 
   useIsomorphicLayoutEffect(() => {
     parentRef.current = traverseFiber<T>(
@@ -196,6 +185,11 @@ export type ContextMap = Map<React.Context<any>, any> & {
   get<T>(context: React.Context<T>): T | undefined
 }
 
+const REACT_CONTEXT_TYPE = Symbol.for('react.context')
+
+const isContext = <T,>(type: unknown): type is React.Context<T> =>
+  type !== null && typeof type === 'object' && '$$typeof' in type && type.$$typeof === REACT_CONTEXT_TYPE
+
 /**
  * Returns a map of all contexts and their values.
  */
@@ -207,13 +201,9 @@ export function useContextMap(): ContextMap {
   contextMap.clear()
   let node = fiber
   while (node) {
-    if (node.type && typeof node.type === 'object') {
-      // https://github.com/facebook/react/pull/28226
-      const enableRenderableContext = node.type._context === undefined && node.type.Provider === node.type
-      const context = enableRenderableContext ? node.type : node.type._context
-      if (context && context !== FiberContext && !contextMap.has(context)) {
-        contextMap.set(context, React.useContext(wrapContext(context)))
-      }
+    const context = node.type
+    if (isContext(context) && context !== FiberContext && !contextMap.has(context)) {
+      contextMap.set(context, React.use(wrapContext(context)))
     }
 
     node = node.return!
