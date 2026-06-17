@@ -15,6 +15,9 @@
   ],
   "homepage": "https://github.com/pmndrs/its-fine",
   "repository": "https://github.com/pmndrs/its-fine",
+  "bugs": {
+    "url": "https://github.com/pmndrs/its-fine/issues"
+  },
   "license": "MIT",
   "files": [
     "dist/*"
