@@ -46,5 +46,8 @@
   "scripts": {
     "build": "rimraf dist && vite build && tsc",
     "test": "vitest run"
+  },
+  "bugs": {
+    "url": "https://github.com/pmndrs/its-fine/issues"
   }
 }
