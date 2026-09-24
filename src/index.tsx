@@ -1,4 +1,4 @@
-import * as React from 'react'
+import React from 'react'
 import type ReactReconciler from 'react-reconciler'
 
 /**
@@ -271,7 +271,8 @@ export function useActivityBridge(): ActivityBridge {
       if (node.elementType === React.Activity) {
         // Fiber alternates share Activity's Offscreen instance.
         const instance = node.child?.tag === 22 ? node.child.stateNode : null
-        if (typeof instance?._visibility !== 'number') throw new Error('its-fine: unsupported React Activity internals!')
+        if (typeof instance?._visibility !== 'number')
+          throw new Error('its-fine: unsupported React Activity internals!')
         activities.push(instance)
       } else if (node.tag === 22 && node.return?.elementType !== React.Activity) {
         suspensible = true
@@ -317,7 +318,13 @@ export function useActivityBridge(): ActivityBridge {
       Bridge({ children }: React.PropsWithChildren<{}>) {
         // Subscribe outside Activity so hidden children can be revealed.
         return (
-          <React.Activity mode={React.useSyncExternalStore(store.subscribe, () => mode, () => 'hidden' as const)}>
+          <React.Activity
+            mode={React.useSyncExternalStore(
+              store.subscribe,
+              () => mode,
+              () => 'hidden' as const,
+            )}
+          >
             {children}
           </React.Activity>
         )

@@ -26,6 +26,7 @@
   "react-native": "./dist/index.js",
   "sideEffects": false,
   "devDependencies": {
+    "@rsbuild/core": "2.2.9",
     "@types/node": "^22.13.4",
     "@types/react": "19.2.0",
     "@types/react-dom": "19.2.0",
@@ -48,6 +49,7 @@
   },
   "scripts": {
     "build": "rimraf dist && vite build && tsc",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:bundle": "node scripts/check-bundle.mjs"
   }
 }
