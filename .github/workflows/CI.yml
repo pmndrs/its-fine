@@ -8,12 +8,22 @@ on:
 jobs:
   build-test-lint:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # latest catches changes to the React internals useActivityBridge reads.
+        react: ['19.0.0', '19.2.0', 'latest']
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v2
+        with:
+          node-version: 22
 
       - name: Install dependencies
         run: yarn install
+
+      - name: Select React version
+        run: yarn add --dev --exact react@${{ matrix.react }} react-dom@${{ matrix.react }} react-test-renderer@${{ matrix.react }}
 
       - name: Check build health
         run: yarn build
