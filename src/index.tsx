@@ -240,3 +240,111 @@ export function useContextBridge(): ContextBridge {
     [contextMap],
   )
 }
+
+/** A component that forwards ancestor Activity visibility into another React root. */
+export type ActivityBridge = React.FC<React.PropsWithChildren<{}>>
+
+function requestFrame(callback: () => void): () => void {
+  if (typeof requestAnimationFrame === 'function') {
+    const frame = requestAnimationFrame(callback)
+    return () => cancelAnimationFrame(frame)
+  }
+  const timeout = setTimeout(callback, 16)
+  return () => clearTimeout(timeout)
+}
+
+/**
+ * Forwards ancestor Activity visibility into another root. Requires React 19.2+,
+ * an Activity capable destination renderer, and a {@link FiberProvider}.
+ *
+ * Suspense does not hide the destination. While Suspense hides the source,
+ * visibility is sampled once per frame and changes between samples can be missed.
+ * Source deletion hides the destination without unmounting its root.
+ */
+export function useActivityBridge(): ActivityBridge {
+  if (!React.Activity) throw new Error('its-fine: useActivityBridge requires React 19.2 or later!')
+  const fiber = useFiber()
+  const [bridge] = React.useState(() => {
+    const activities: { _visibility: number }[] = []
+    let suspensible = false
+    traverseFiber(fiber, true, (node) => {
+      if (node.elementType === React.Activity) {
+        // Fiber alternates share Activity's Offscreen instance.
+        const instance = node.child?.tag === 22 ? node.child.stateNode : null
+        if (typeof instance?._visibility !== 'number') throw new Error('its-fine: unsupported React Activity internals!')
+        activities.push(instance)
+      } else if (node.tag === 22 && node.return?.elementType !== React.Activity) {
+        suspensible = true
+      }
+    })
+
+    // Keep the destination hidden until the source commits.
+    let mode: 'hidden' | 'visible' = 'hidden'
+    const listeners = new Set<() => void>()
+    let cancelPoll: (() => void) | undefined
+    const store = {
+      mounted: false,
+      connected: false,
+      subscribe(listener: () => void) {
+        listeners.add(listener)
+        return () => {
+          listeners.delete(listener)
+        }
+      },
+      sync(sample: boolean) {
+        // Suspense can keep layout effects disconnected after Activity reveals.
+        if (store.mounted && !store.connected && suspensible && activities.length > 0) {
+          // Schedule before notifying listeners so an update error does not stop polling.
+          if (!cancelPoll) {
+            cancelPoll = requestFrame(() => {
+              cancelPoll = undefined
+              store.sync(true)
+            })
+          }
+        } else {
+          cancelPoll?.()
+          cancelPoll = undefined
+        }
+
+        let next = mode
+        if (!store.mounted) next = 'hidden'
+        else if (store.connected) next = 'visible'
+        else if (sample) next = activities.every((activity) => (activity._visibility & 1) !== 0) ? 'visible' : 'hidden'
+        if (mode === next) return
+        mode = next
+        for (const listener of listeners) listener()
+      },
+      Bridge({ children }: React.PropsWithChildren<{}>) {
+        // Subscribe outside Activity so hidden children can be revealed.
+        return (
+          <React.Activity mode={React.useSyncExternalStore(store.subscribe, () => mode, () => 'hidden' as const)}>
+            {children}
+          </React.Activity>
+        )
+      },
+    }
+    return store
+  })
+
+  // Insertion effects stay mounted while hidden and clean up on deletion.
+  React.useInsertionEffect(() => {
+    bridge.mounted = true
+    // Defer updates until insertion effects finish and ancestor visibility settles.
+    queueMicrotask(() => bridge.sync(false))
+    return () => {
+      bridge.mounted = false
+      queueMicrotask(() => bridge.sync(false))
+    }
+  }, [bridge])
+
+  // Activity and Suspense disconnect layout effects when hiding the source.
+  React.useLayoutEffect(() => {
+    bridge.connected = true
+    bridge.sync(false)
+    return () => {
+      bridge.connected = false
+      bridge.sync(true)
+    }
+  }, [bridge])
+  return bridge.Bridge
+}

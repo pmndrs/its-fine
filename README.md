@@ -27,6 +27,7 @@ As such, you can go beyond React's component abstraction; components are self-aw
   - [useNearestParent](#useNearestParent)
   - [useContextMap](#useContextMap)
   - [useContextBridge](#useContextBridge)
+  - [useActivityBridge](#useActivityBridge)
 - [Utils](#utils)
   - [traverseFiber](#traverseFiber)
 
@@ -209,6 +210,42 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
   </FiberProvider>,
 )
 ```
+
+### useActivityBridge
+
+Returns a stable `ActivityBridge` that forwards ancestor `<Activity>` visibility into another React root while preserving child state. Requires React 19.2+ and an Activity capable renderer.
+
+```tsx
+import * as React from 'react'
+import * as ReactDOM from 'react-dom/client'
+import { useActivityBridge, FiberProvider } from 'its-fine'
+
+// The application owns the destination root and its cleanup
+const destination = ReactDOM.createRoot(document.getElementById('destination')!)
+
+function Canvas(props: { children: React.ReactNode }) {
+  // Forwards Activity visibility. Use useContextBridge separately for context
+  const Bridge = useActivityBridge()
+  // Render after the source commits. Removing Canvas hides the destination
+  React.useLayoutEffect(() => {
+    destination.render(<Bridge>{props.children}</Bridge>)
+  })
+  return null
+}
+
+ReactDOM.createRoot(document.getElementById('source')!).render(
+  <FiberProvider>
+    {/* Set mode to "hidden" to hide both roots' children while preserving state */}
+    <React.Activity mode="visible">
+      <Canvas>
+        <div>Scene</div>
+      </Canvas>
+    </React.Activity>
+  </FiberProvider>,
+)
+```
+
+If the source shows a Suspense loading fallback, the destination stays visible unless an ancestor Activity is hidden.
 
 ## Utils
 

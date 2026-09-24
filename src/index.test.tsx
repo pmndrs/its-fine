@@ -10,6 +10,7 @@ import {
   useNearestChild,
   useNearestParent,
   useContextBridge,
+  useActivityBridge,
   FiberProvider,
 } from './index'
 
@@ -316,6 +317,11 @@ describe('useContextBridge', () => {
 
     const outer: string[] = []
     const inner: string[] = []
+    function expectValues(values: [string, string | null]) {
+      for (const target of [outer, inner]) {
+        expect(target.splice(0).slice(-2)).toStrictEqual(values)
+      }
+    }
 
     function Test({ secondary }: { secondary?: boolean }) {
       const target = secondary ? inner : outer
@@ -360,6 +366,7 @@ describe('useContextBridge', () => {
         </Providers>,
       ),
     )
+    expectValues(['value1', 'value2'])
 
     await act(async () =>
       renderer.update(
@@ -368,6 +375,7 @@ describe('useContextBridge', () => {
         </Providers>,
       ),
     )
+    expectValues(['value1__new', 'value2__new'])
 
     await act(async () =>
       renderer.update(
@@ -376,6 +384,7 @@ describe('useContextBridge', () => {
         </Providers>,
       ),
     )
+    expectValues(['value1__new', null])
 
     await act(async () =>
       renderer.update(
@@ -387,17 +396,7 @@ describe('useContextBridge', () => {
       ),
     )
 
-    expect(outer).toStrictEqual([
-      'value1',
-      'value2',
-      'value1__new',
-      'value2__new',
-      'value1__new',
-      null,
-      'value1__new',
-      'value2__new',
-    ])
-    expect(inner).toStrictEqual(outer)
+    expectValues(['value1__new', 'value2__new'])
   })
 
   it('does not unmount children', async () => {
@@ -433,4 +432,20 @@ describe('useContextBridge', () => {
     await act(async () => renderer.update(<Test value={false} />))
     expect(calls).toStrictEqual(['mount'])
   })
+})
+
+it.skipIf(React.Activity !== undefined)('requires React 19.2 only when the Activity bridge is used', async () => {
+  function Source() {
+    useActivityBridge()
+    return null
+  }
+  await expect(async () => {
+    await act(async () => {
+      create(
+        <FiberProvider>
+          <Source />
+        </FiberProvider>,
+      )
+    })
+  }).rejects.toThrow('its-fine: useActivityBridge requires React 19.2 or later!')
 })
