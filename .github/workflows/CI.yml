@@ -28,5 +28,8 @@ jobs:
       - name: Check build health
         run: yarn build
 
+      - name: Check published ESM bundle
+        run: yarn test:bundle
+
       - name: Run tests
         run: yarn test --silent
